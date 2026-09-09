@@ -1,1 +1,367 @@
-# jurnal_harian
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jurnal Sholat & Catatan Tugas (HTML + JS)</title>
+    <style>
+        /* Desain UI Clean & Modern */
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: #00897b;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #00897b;
+        }
+
+        /* Styling List */
+        .item-list {
+            list-style: none;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .item:last-child {
+            border-bottom: none;
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .checkbox-custom {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .done {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .meta-text {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            background-color: #00897b;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: #00796b;
+        }
+
+        .btn-delete {
+            color: #e53935;
+            background: none;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 8px;
+        }
+
+        .btn-delete:hover {
+            color: #b71c1c;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header Aplikasi -->
+    <div class="header">
+        <h1>Jurnal Sholat & Catatan Tugas</h1>
+        <p id="tanggal-hari-ini"></p>
+    </div>
+
+    <!-- SECTION 1: CHECKLIST SHOLAT HARI INI -->
+    <div class="card">
+        <div class="card-title">Checklist Sholat Hari Ini</div>
+        <ul class="item-list" id="list-sholat">
+            <!-- Data Sholat di-render oleh JavaScript -->
+        </ul>
+    </div>
+
+    <!-- SECTION 2: FORM TAMBAH TUGAS -->
+    <div class="card">
+        <div class="card-title">Tambah Tugas Baru</div>
+        <form id="form-tugas">
+            <div class="form-group">
+                <label>Mata Pelajaran</label>
+                <input type="text" id="mapel" class="form-control" placeholder="Contoh: Matematika" required>
+            </div>
+            <div class="form-group">
+                <label>Judul Tugas</label>
+                <input type="text" id="judul" class="form-control" placeholder="Contoh: PR Halaman 42" required>
+            </div>
+            <div class="form-group">
+                <label>Deadline</label>
+                <input type="date" id="deadline" class="form-control" required>
+            </div>
+            <button type="submit" class="btn">Simpan Tugas</button>
+        </form>
+    </div>
+
+    <!-- SECTION 3: DAFTAR TUGAS SEKOLAH -->
+    <div class="card">
+        <div class="card-title">Daftar Tugas</div>
+        <ul class="item-list" id="list-tugas">
+            <!-- Data Tugas di-render oleh JavaScript -->
+        </ul>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 1. INISIALISASI & TANGGAL
+    // ==========================================
+    const now = new Date();
+    const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('tanggal-hari-ini').innerText = now.toLocaleDateString('id-ID', optionsDate);
+
+    // Format tanggal hari ini (YYYY-MM-DD)
+    const todayStr = now.toISOString().split('T')[0];
+
+    // Array nama sholat
+    const defaultSholat = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+
+    // ==========================================
+    // 2. LOGIKA SHOLAT (LOCALSTORAGE)
+    // ==========================================
+    function getSholatData() {
+        const stored = localStorage.getItem('sholat_data');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Cek apakah data tersimpan milik hari ini
+            if (parsed.tanggal === todayStr) {
+                return parsed.list;
+            }
+        }
+        
+        // Buat data sholat baru jika beda hari
+        const initialList = defaultSholat.map((nama, index) => ({
+            id: index,
+            nama: nama,
+            isDone: false
+        }));
+
+        saveSholatData(initialList);
+        return initialList;
+    }
+
+    function saveSholatData(list) {
+        localStorage.setItem('sholat_data', JSON.stringify({
+            tanggal: todayStr,
+            list: list
+        }));
+    }
+
+    function renderSholat() {
+        const sholatList = getSholatData();
+        const container = document.getElementById('list-sholat');
+        container.innerHTML = '';
+
+        sholatList.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'item';
+            li.innerHTML = `
+                <div class="item-left">
+                    <input type="checkbox" class="checkbox-custom" ${item.isDone ? 'checked' : ''} onchange="toggleSholat(${item.id})">
+                    <span class="${item.isDone ? 'done' : ''}">${item.nama}</span>
+                </div>
+            `;
+            container.appendChild(li);
+        });
+    }
+
+    function toggleSholat(id) {
+        const sholatList = getSholatData();
+        const updated = sholatList.map(item => {
+            if (item.id === id) item.isDone = !item.isDone;
+            return item;
+        });
+        saveSholatData(updated);
+        renderSholat();
+    }
+
+    // ==========================================
+    // 3. LOGIKA TUGAS (LOCALSTORAGE)
+    // ==========================================
+    function getTugasData() {
+        return JSON.parse(localStorage.getItem('tugas_data')) || [];
+    }
+
+    function saveTugasData(list) {
+        localStorage.setItem('tugas_data', JSON.stringify(list));
+    }
+
+    function renderTugas() {
+        const tugasList = getTugasData();
+        const container = document.getElementById('list-tugas');
+        container.innerHTML = '';
+
+        if (tugasList.length === 0) {
+            container.innerHTML = '<li class="item" style="justify-content: center; color: #888;">Belum ada tugas disubmit.</li>';
+            return;
+        }
+
+        tugasList.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'item';
+            
+            // Format tanggal deadline
+            const deadlineDate = new Date(item.deadline);
+            const formattedDeadline = deadlineDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+            li.innerHTML = `
+                <div class="item-left">
+                    <input type="checkbox" class="checkbox-custom" ${item.isCompleted ? 'checked' : ''} onchange="toggleTugas(${item.id})">
+                    <div>
+                        <div class="${item.isCompleted ? 'done' : ''}" style="font-weight: 600;">${escapeHtml(item.judul)}</div>
+                        <div class="meta-text">${escapeHtml(item.mapel)} • Deadline: ${formattedDeadline}</div>
+                    </div>
+                </div>
+                <button class="btn-delete" onclick="hapusTugas(${item.id})" title="Hapus">✕</button>
+            `;
+            container.appendChild(li);
+        });
+    }
+
+    // Handle Form Submit Tambah Tugas
+    document.getElementById('form-tugas').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const mapel = document.getElementById('mapel').value;
+        const judul = document.getElementById('judul').value;
+        const deadline = document.getElementById('deadline').value;
+
+        const tugasList = getTugasData();
+        tugasList.unshift({
+            id: Date.now(), // Unique ID menggunakan timestamp
+            mapel: mapel,
+            judul: judul,
+            deadline: deadline,
+            isCompleted: false
+        });
+
+        saveTugasData(tugasList);
+        renderTugas();
+
+        // Reset form
+        this.reset();
+    });
+
+    function toggleTugas(id) {
+        const tugasList = getTugasData();
+        const updated = tugasList.map(item => {
+            if (item.id === id) item.isCompleted = !item.isCompleted;
+            return item;
+        });
+        saveTugasData(updated);
+        renderTugas();
+    }
+
+    function hapusTugas(id) {
+        if (confirm('Apakah kamu yakin ingin menghapus tugas ini?')) {
+            const tugasList = getTugasData();
+            const filtered = tugasList.filter(item => item.id !== id);
+            saveTugasData(filtered);
+            renderTugas();
+        }
+    }
+
+    // Mencegah XSS Attack
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Jalankan render awal saat halaman terbuka
+    renderSholat();
+    renderTugas();
+</script>
+
+</body>
+</html>
