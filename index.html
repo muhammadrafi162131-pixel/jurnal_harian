@@ -181,7 +181,7 @@
 
         .status-on-time { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
         .status-late { background-color: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-        .status-missed { color: #c62828; font-size: 11px; font-weight: 600; }
+        .status-missed { color: #d32f2f; font-size: 11px; font-weight: 600; }
 
         .summary-row {
             background-color: #e8f5e9;
@@ -231,7 +231,7 @@
         <div class="status-legend">
             <div class="legend-item"><span class="legend-badge status-on-time">✓ Tepat Waktu</span> Dicentang pada harinya</div>
             <div class="legend-item"><span class="legend-badge status-late">✓ Terlambat</span> Dicentang setelah hari berlalu</div>
-            <div class="legend-item"><span class="status-missed">✕ Terlewat</span> Belum dicentang & hari sudah berlalu</div>
+            <div class="legend-item"><span class="status-missed">❌ Terlewat</span> Belum dicentang & hari sudah berlalu</div>
         </div>
 
         <div class="table-responsive">
@@ -378,6 +378,7 @@
         const isPastDate = dateStr < todayStr;
         const isFardhu = fardhuKeys.includes(key);
 
+        // 1. Jika sudah dicentang
         if (itemData && itemData.checked) {
             if (itemData.status === 'late') {
                 return `
@@ -396,15 +397,12 @@
             }
         }
 
+        // 2. Belum dicentang + Hari sudah berlalu + Sholat Fardhu/Wajib
         if (isPastDate && isFardhu) {
-            return `
-                <div class="cell-flex">
-                    <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
-                    <span class="status-missed">✕ Terlewat</span>
-                </div>
-            `;
+            return `<span class="status-missed">❌ Terlewat</span>`;
         }
 
+        // 3. Tanggal hari ini / mendatang / sholat sunnah belum dicentang
         return `
             <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
         `;
