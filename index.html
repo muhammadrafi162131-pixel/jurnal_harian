@@ -265,15 +265,15 @@
         <div class="card-title" style="margin-bottom: 15px;">Tambah Tugas Baru</div>
         <form id="form-tugas">
             <div class="form-group">
-                <label>Mata Pelajaran</label>
+                <label for="mapel">Mata Pelajaran</label>
                 <input type="text" id="mapel" class="form-control" placeholder="Contoh: Matematika" required>
             </div>
             <div class="form-group">
-                <label>Judul Tugas</label>
+                <label for="judul">Judul Tugas</label>
                 <input type="text" id="judul" class="form-control" placeholder="Contoh: PR Halaman 42" required>
             </div>
             <div class="form-group">
-                <label>Deadline</label>
+                <label for="deadline">Deadline</label>
                 <input type="date" id="deadline" class="form-control" required>
             </div>
             <button type="submit" class="btn">Simpan Tugas</button>
@@ -337,7 +337,9 @@
         const selectedYearMonth = pickerBulan.value;
         if (!selectedYearMonth) return;
 
-        const [year, month] = selectedYearMonth.split('-').map(Number);
+        const parts = selectedYearMonth.split('-');
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
         const totalDaysInMonth = new Date(year, month, 0).getDate();
         
         const monthData = getMonthSholatData(selectedYearMonth);
@@ -376,7 +378,6 @@
         const isPastDate = dateStr < todayStr;
         const isFardhu = fardhuKeys.includes(key);
 
-        // Jika Dicentang
         if (itemData && itemData.checked) {
             if (itemData.status === 'late') {
                 return `
@@ -395,7 +396,6 @@
             }
         }
 
-        // Belum dicentang + Tanggal sudah lewat + Sholat Wajib
         if (isPastDate && isFardhu) {
             return `
                 <div class="cell-flex">
@@ -405,7 +405,6 @@
             `;
         }
 
-        // Default checkbox biasa
         return `
             <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
         `;
@@ -421,10 +420,8 @@
         const currentItem = monthData[fullDateStr][sholatKey] || { checked: false, status: '' };
         
         if (currentItem && currentItem.checked) {
-            // Uncheck
             monthData[fullDateStr][sholatKey] = { checked: false, status: '' };
         } else {
-            // Centang baru
             let status = 'on-time';
             if (fullDateStr < todayStr) {
                 status = 'late';
@@ -460,7 +457,6 @@
 
     pickerBulan.addEventListener('change', renderMatrixTable);
 
-    // TUGAS LOGIC
     function getTugasData() {
         return JSON.parse(localStorage.getItem('tugas_data')) || [];
     }
