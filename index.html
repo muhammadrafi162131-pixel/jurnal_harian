@@ -163,7 +163,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
         }
 
         .checkbox-cell {
@@ -192,7 +192,7 @@
             color: #2e7d32;
         }
 
-        /* Styling List Tugas */
+        /* STYLING LIST TUGAS */
         .item-list { list-style: none; }
         .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
         .item:last-child { border-bottom: none; }
@@ -261,11 +261,11 @@
                     </tr>
                 </thead>
                 <tbody id="tbody-matrix-sholat">
-                    <!-- Baris Tanggal di-render oleh JS -->
+                    <!-- Content di-render JS -->
                 </tbody>
                 <tfoot>
                     <tr class="summary-row" id="tfoot-total-sholat">
-                        <!-- Total Capaian Bulanan di-render oleh JS -->
+                        <!-- Total Capaian di-render JS -->
                     </tr>
                 </tfoot>
             </table>
@@ -300,9 +300,6 @@
 </div>
 
 <script>
-    // ==========================================
-    // 1. FORMAT TANGGAL & WAKTU
-    // ==========================================
     const now = new Date();
 
     function formatDateToYYYYMM(dateObj) {
@@ -333,9 +330,6 @@
     const sholatKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya', 'tarawih', 'dhuha', 'tahajud'];
     const fardhuKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
 
-    // ==========================================
-    // 2. LOGIKA TABEL SHOLAT BULANAN
-    // ==========================================
     function getMonthSholatData(yearMonthStr) {
         const stored = localStorage.getItem('sholat_monthly_matrix');
         let data = stored ? JSON.parse(stored) : {};
@@ -395,7 +389,7 @@
         const isPastDate = dateStr < todayStr;
         const isFardhu = fardhuKeys.includes(key);
 
-        // Jika Dicentang
+        // Kasus 1: Dicentang
         if (itemData.checked) {
             if (itemData.status === 'late') {
                 return `
@@ -414,7 +408,7 @@
             }
         }
 
-        // Jika Belum Dicentang dan Hari Sudah Berlalu (Sholat Fardhu)
+        // Kasus 2: Belum dicentang dan hari sudah lewat (Sholat Wajib)
         if (isPastDate && isFardhu) {
             return `
                 <div class="cell-flex">
@@ -424,7 +418,7 @@
             `;
         }
 
-        // Checkbox biasa (Hari ini / Masa depan / Sunnah)
+        // Kasus 3: Default (Hari ini / Masa Depan / Sholat Sunnah)
         return `
             <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
         `;
@@ -440,13 +434,12 @@
         const currentItem = monthData[fullDateStr][sholatKey] || { checked: false, status: '' };
         
         if (currentItem.checked) {
-            // Uncheck jika diklik lagi
+            // Uncheck / Batal centang
             monthData[fullDateStr][sholatKey] = { checked: false, status: '' };
         } else {
-            // Tentukan status saat dicentang
+            // Centang baru
             let status = 'on-time';
             if (fullDateStr < todayStr) {
-                // Centang untuk tanggal yang sudah berlalu -> Terlambat
                 status = 'late';
             }
             monthData[fullDateStr][sholatKey] = { checked: true, status: status };
@@ -480,9 +473,7 @@
 
     pickerBulan.addEventListener('change', renderMatrixTable);
 
-    // ==========================================
-    // 3. LOGIKA DAFTAR TUGAS
-    // ==========================================
+    // LOGIKA TUGAS
     function getTugasData() {
         return JSON.parse(localStorage.getItem('tugas_data')) || [];
     }
@@ -492,17 +483,10 @@
     }
 
     function getTaskStatus(item) {
-        if (item.isCompleted) {
-            return { label: 'Selesai', class: 'badge-success' };
-        }
-
-        if (item.deadline < todayStr) {
-            return { label: 'Terlambat', class: 'badge-danger' };
-        } else if (item.deadline === todayStr) {
-            return { label: 'Tenggat Hari Ini', class: 'badge-warning' };
-        } else {
-            return { label: 'Belum Selesai', class: 'badge-info' };
-        }
+        if (item.isCompleted) return { label: 'Selesai', class: 'badge-success' };
+        if (item.deadline < todayStr) return { label: 'Terlambat', class: 'badge-danger' };
+        if (item.deadline === todayStr) return { label: 'Tenggat Hari Ini', class: 'badge-warning' };
+        return { label: 'Belum Selesai', class: 'badge-info' };
     }
 
     function renderTugas() {
@@ -545,7 +529,6 @@
 
     document.getElementById('form-tugas').addEventListener('submit', function(e) {
         e.preventDefault();
-
         const mapel = document.getElementById('mapel').value;
         const judul = document.getElementById('judul').value;
         const deadline = document.getElementById('deadline').value;
@@ -592,7 +575,6 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Inisialisasi Aplikasi
     renderMatrixTable();
     renderTugas();
 </script>
