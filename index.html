@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 950px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -83,7 +83,33 @@
             background: #fff;
         }
 
-        /* STYLING TABEL MATRIKS BULANAN */
+        /* LEGEND STATUS SHOLAT */
+        .status-legend {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* TABEL SHOLAT */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -119,7 +145,6 @@
             font-weight: normal;
         }
 
-        /* Highlight Hari Ini */
         .today-row {
             background-color: #e0f2f1 !important;
             font-weight: bold;
@@ -133,21 +158,32 @@
             background-color: #fcfcfc;
         }
 
-        .sholat-matrix-table tr:hover:not(.today-row) {
-            background-color: #f1f8f6;
-        }
-
-        /* STYLING CHECKBOX */
+        /* STYLING CHECKBOX & STATUS BADGES */
         .checkbox-cell {
             width: 18px;
             height: 18px;
             cursor: pointer;
             accent-color: #00897b;
-            display: inline-block;
             vertical-align: middle;
-            -webkit-appearance: checkbox;
-            appearance: checkbox;
         }
+
+        .checkbox-cell:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .status-tag {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-on-time { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .status-late { background-color: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+        .status-missed { background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+        .status-future { color: #999; font-style: italic; font-size: 11px; }
 
         .summary-row {
             background-color: #e8f5e9;
@@ -156,112 +192,38 @@
         }
 
         /* Styling List Tugas */
-        .item-list {
-            list-style: none;
-        }
+        .item-list { list-style: none; }
+        .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .item:last-child { border-bottom: none; }
+        .item-left { display: flex; align-items: center; gap: 12px; }
+        .done { text-decoration: line-through; color: #888; }
+        .meta-text { font-size: 12px; color: #666; margin-top: 3px; }
 
-        .item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .item:last-child {
-            border-bottom: none;
-        }
-
-        .item-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .done {
-            text-decoration: line-through;
-            color: #888;
-        }
-
-        .meta-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 3px;
-        }
-
-        /* Styling Badge Status Tugas */
-        .badge {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: bold;
-            display: inline-block;
-            margin-left: 6px;
-        }
-
+        .badge { font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: bold; display: inline-block; margin-left: 6px; }
         .badge-success { background-color: #e8f5e9; color: #2e7d32; }
         .badge-danger { background-color: #ffebee; color: #c62828; }
         .badge-warning { background-color: #fff3e0; color: #ef6c00; }
         .badge-info { background-color: #e0f7fa; color: #00838f; }
 
-        /* Form Inputs */
-        .form-group {
-            margin-bottom: 12px;
-        }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; margin-bottom: 4px; color: #555; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
 
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 4px;
-            color: #555;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .btn {
-            background-color: #00897b;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-        }
-
-        .btn:hover {
-            background-color: #00796b;
-        }
-
-        .btn-delete {
-            color: #e53935;
-            background: none;
-            border: none;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 0 8px;
-        }
-
-        .btn-delete:hover {
-            color: #b71c1c;
-        }
+        .btn { background-color: #00897b; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn:hover { background-color: #00796b; }
+        .btn-delete { color: #e53935; background: none; border: none; font-size: 18px; font-weight: bold; cursor: pointer; padding: 0 8px; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- Header Utama -->
     <div class="header">
         <h1>Jurnal Sholat Ramadhan & Tugas</h1>
         <p id="tanggal-hari-ini"></p>
     </div>
 
+    <!-- SECTION 1: TABEL SHOLAT BULANAN -->
     <div class="card">
         <div class="card-header-flex">
             <div class="card-title">Jurnal Sholat Bulanan</div>
@@ -269,6 +231,13 @@
                 <label for="picker-bulan" style="font-size: 12px; color: #555;">Pilih Bulan:</label>
                 <input type="month" id="picker-bulan" class="input-month">
             </div>
+        </div>
+
+        <!-- Legend Status -->
+        <div class="status-legend">
+            <div class="legend-item"><span class="legend-badge status-on-time">✓ Tepat Waktu</span> Sholat dicentang pada waktunya</div>
+            <div class="legend-item"><span class="legend-badge status-late">✓ Terlambat</span> Sholat baru dicentang setelah lewat hari/waktu</div>
+            <div class="legend-item"><span class="legend-badge status-missed">✕ Terlewat</span> Hari sudah berlalu dan tidak dicentang</div>
         </div>
 
         <div class="table-responsive">
@@ -291,15 +260,18 @@
                     </tr>
                 </thead>
                 <tbody id="tbody-matrix-sholat">
-                    </tbody>
+                    <!-- Baris Tanggal di-render oleh JS -->
+                </tbody>
                 <tfoot>
                     <tr class="summary-row" id="tfoot-total-sholat">
-                        </tr>
+                        <!-- Total Capaian Bulanan di-render oleh JS -->
+                    </tr>
                 </tfoot>
             </table>
         </div>
     </div>
 
+    <!-- SECTION 2: FORM TAMBAH TUGAS -->
     <div class="card">
         <div class="card-title" style="margin-bottom: 15px;">Tambah Tugas Baru</div>
         <form id="form-tugas">
@@ -319,6 +291,7 @@
         </form>
     </div>
 
+    <!-- SECTION 3: DAFTAR TUGAS SEKOLAH -->
     <div class="card">
         <div class="card-title" style="margin-bottom: 15px;">Daftar Tugas</div>
         <ul class="item-list" id="list-tugas"></ul>
@@ -327,10 +300,22 @@
 
 <script>
     // ==========================================
-    // 1. FORMAT TANGGAL & HARI
+    // 1. JAM & JADWAL SHOLAT DEFAULT
     // ==========================================
     const now = new Date();
     
+    // Estimasi jam sholat (Format 24 Jam)
+    const sholatSchedule = {
+        subuh: "04:30",
+        dzuhur: "12:00",
+        ashar: "15:15",
+        maghrib: "18:05",
+        isya: "19:15",
+        tarawih: "19:45",
+        dhuha: "07:00",
+        tahajud: "03:00"
+    };
+
     function formatDateToYYYYMM(dateObj) {
         const year = dateObj.getFullYear();
         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -359,7 +344,7 @@
     const sholatKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya', 'tarawih', 'dhuha', 'tahajud'];
 
     // ==========================================
-    // 2. LOGIKA TABEL MATRIKS SHOLAT BULANAN
+    // 2. LOGIKA SHOLAT & STATUS TERLAMBAT/TEPAT
     // ==========================================
     function getMonthSholatData(yearMonthStr) {
         const stored = localStorage.getItem('sholat_monthly_matrix');
@@ -404,15 +389,10 @@
             const dayData = monthData[fullDateStr] || {};
 
             sholatKeys.forEach(key => {
-                const isChecked = Boolean(dayData[key]);
+                const itemData = dayData[key] || { checked: false, status: '' };
+                const cellContent = renderSholatCell(fullDateStr, key, itemData);
 
-                rowHtml += `
-                    <td>
-                        <input type="checkbox" class="checkbox-cell" 
-                            ${isChecked ? 'checked' : ''} 
-                            onchange="toggleMatrixCheck(this, '${selectedYearMonth}', '${fullDateStr}', '${key}')">
-                    </td>
-                `;
+                rowHtml += `<td>${cellContent}</td>`;
             });
 
             tr.innerHTML = rowHtml;
@@ -422,18 +402,82 @@
         updateTotalSummary();
     }
 
-    function toggleMatrixCheck(checkbox, yearMonthStr, fullDateStr, sholatKey) {
+    function renderSholatCell(dateStr, key, itemData) {
+        const selectedDate = new Date(dateStr + 'T23:59:59');
+        const isPastDate = dateStr < todayStr;
+        const isFutureDate = dateStr > todayStr;
+        const isToday = dateStr === todayStr;
+
+        // Cek jam sholat untuk hari ini
+        let isTimePassedToday = false;
+        if (isToday) {
+            const [sholatHour, sholatMin] = sholatSchedule[key].split(':').map(Number);
+            const sholatTimeToday = new Date();
+            sholatTimeToday.setHours(sholatHour, sholatMin, 0, 0);
+            isTimePassedToday = now > sholatTimeToday;
+        }
+
+        // Jika Belum Terjadi (Masa Depan)
+        if (isFutureDate) {
+            return `<span class="status-future">-</span>`;
+        }
+
+        // Jika Sudah Dicentang
+        if (itemData.checked) {
+            if (itemData.status === 'late') {
+                return `<span class="status-tag status-late" onclick="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">✓ Terlambat</span>`;
+            } else {
+                return `<span class="status-tag status-on-time" onclick="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">✓ Tepat</span>`;
+            }
+        }
+
+        // Jika Belum Dicentang & Hari Sudah Berlalu (Terlewat / Missed)
+        if (isPastDate && ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'].includes(key)) {
+            return `<span class="status-tag status-missed" onclick="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">✕ Terlewat</span>`;
+        }
+
+        // Checkbox Normal untuk Hari Ini atau Sunnah
+        return `
+            <input type="checkbox" class="checkbox-cell" 
+                onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
+        `;
+    }
+
+    function toggleMatrixCheck(yearMonthStr, fullDateStr, sholatKey) {
         const monthData = getMonthSholatData(yearMonthStr);
         
         if (!monthData[fullDateStr]) {
             monthData[fullDateStr] = {};
         }
 
-        // Simpan status sesuai status centang checkbox saat ini
-        monthData[fullDateStr][sholatKey] = checkbox.checked;
+        const currentItem = monthData[fullDateStr][sholatKey] || { checked: false, status: '' };
+        
+        if (currentItem.checked) {
+            // Uncheck jika diklik lagi
+            monthData[fullDateStr][sholatKey] = { checked: false, status: '' };
+        } else {
+            // Tentukan status saat dicentang
+            let status = 'on-time';
+            
+            if (fullDateStr < todayStr) {
+                // Centang tanggal lalu -> Terlambat
+                status = 'late';
+            } else if (fullDateStr === todayStr) {
+                // Cek jam jika hari ini
+                const [sholatHour, sholatMin] = sholatSchedule[sholatKey].split(':').map(Number);
+                const limitTime = new Date();
+                limitTime.setHours(sholatHour + 2, sholatMin, 0, 0); // Toleransi 2 jam setelah waktu sholat
+
+                if (new Date() > limitTime) {
+                    status = 'late';
+                }
+            }
+
+            monthData[fullDateStr][sholatKey] = { checked: true, status: status };
+        }
         
         saveMonthSholatData(yearMonthStr, monthData);
-        updateTotalSummary();
+        renderMatrixTable();
     }
 
     function updateTotalSummary() {
@@ -445,7 +489,9 @@
 
         Object.values(monthData).forEach(dayData => {
             sholatKeys.forEach(key => {
-                if (dayData[key]) totalPerSholat[key]++;
+                if (dayData[key] && dayData[key].checked) {
+                    totalPerSholat[key]++;
+                }
             });
         });
 
