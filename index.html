@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jurnal Sholat & Catatan Tugas</title>
+    <title>Jurnal Sholat Ramadhan & Catatan Tugas</title>
     <style>
         * {
             box-sizing: border-box;
@@ -75,6 +75,16 @@
             border-bottom: 1px dashed #ddd;
         }
 
+        .section-divider {
+            font-size: 12px;
+            font-weight: bold;
+            color: #00897b;
+            background-color: #e0f2f1;
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin: 12px 0 6px 0;
+        }
+
         .item-list {
             list-style: none;
         }
@@ -83,7 +93,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #eee;
         }
 
@@ -106,6 +116,23 @@
         .done {
             text-decoration: line-through;
             color: #888;
+        }
+
+        .sholat-time-info {
+            font-size: 11px;
+            color: #00796b;
+            background: #e0f2f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            font-weight: 600;
+        }
+
+        .timestamp-text {
+            font-size: 11px;
+            color: #4caf50;
+            font-weight: 600;
+            margin-left: 8px;
         }
 
         .meta-text {
@@ -207,24 +234,22 @@
 <body>
 
 <div class="container">
-    <!-- Header Aplikasi Utama -->
+    <!-- Header Utama -->
     <div class="header">
-        <h1>Jurnal Sholat & Catatan Tugas</h1>
+        <h1>Jurnal Sholat Ramadhan & Tugas</h1>
         <p id="tanggal-hari-ini"></p>
     </div>
 
-    <!-- SECTION 1: CHECKLIST SHOLAT BERDASARKAN TANGGAL -->
+    <!-- SECTION 1: CHECKLIST SHOLAT ALA RAMADHAN -->
     <div class="card">
         <div class="card-header-flex">
-            <div class="card-title">Checklist Sholat</div>
-            <!-- Fitur Pilih Tanggal Sholat -->
+            <div class="card-title">Jurnal Sholat</div>
             <div>
                 <label for="picker-tanggal-sholat" style="font-size: 12px; color: #666; margin-right: 4px;">Pilih Tanggal:</label>
                 <input type="date" id="picker-tanggal-sholat" class="input-date-mini">
             </div>
         </div>
 
-        <!-- Tampilan Nama Hari, Tanggal, Bulan, Tahun untuk Sholat -->
         <div class="sholat-date-sub" id="label-tanggal-sholat"></div>
 
         <ul class="item-list" id="list-sholat"></ul>
@@ -259,11 +284,10 @@
 
 <script>
     // ==========================================
-    // 1. FORMATTER TANGGAL LENGKAP HARI, TGL, BLN, THN
+    // 1. INISIALISASI WAKTU & FORMAT TANGGAL
     // ==========================================
     const now = new Date();
     
-    // Format YYYY-MM-DD standar
     function formatDateToYYYYMMDD(dateObj) {
         const year = dateObj.getFullYear();
         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -271,7 +295,6 @@
         return `${year}-${month}-${day}`;
     }
 
-    // Format Bahasa Indonesia: Hari, Tanggal Bulan Tahun
     function formatDateToIndonesian(dateObj) {
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         return dateObj.toLocaleDateString('id-ID', options);
@@ -280,29 +303,35 @@
     const todayStr = formatDateToYYYYMMDD(now);
     document.getElementById('tanggal-hari-ini').innerText = formatDateToIndonesian(now);
 
-    // Tanggal sholat aktif yang sedang dipilih (Default: Hari ini)
     let selectedSholatDateStr = todayStr;
 
-    // Inisialisasi input picker tanggal sholat ke hari ini
     const pickerSholat = document.getElementById('picker-tanggal-sholat');
     pickerSholat.value = todayStr;
 
-    // Array default 5 waktu sholat
-    const defaultSholat = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+    // Default Master List Sholat ala Ramadhan (Wajib & Sunnah)
+    const defaultSholatMaster = [
+        { id: 'subuh', nama: 'Subuh', jenis: 'wajib', waktu: '04:30 WIB' },
+        { id: 'dzuhur', nama: 'Dzuhur', jenis: 'wajib', waktu: '12:00 WIB' },
+        { id: 'ashar', nama: 'Ashar', jenis: 'wajib', waktu: '15:15 WIB' },
+        { id: 'maghrib', nama: 'Maghrib', jenis: 'wajib', waktu: '18:05 WIB' },
+        { id: 'isya', nama: 'Isya', jenis: 'wajib', waktu: '19:15 WIB' },
+        { id: 'tarawih', nama: 'Tarawih & Witir', jenis: 'sunnah', waktu: '19:45 WIB' },
+        { id: 'dhuha', nama: 'Dhuha', jenis: 'sunnah', waktu: '07:00 WIB' },
+        { id: 'tahajud', nama: 'Tahajud', jenis: 'sunnah', waktu: '03:00 WIB' }
+    ];
 
     // ==========================================
-    // 2. LOGIKA CHECKLIST SHOLAT PER TANGGAL
+    // 2. LOGIKA SHOLAT ALA RAMADHAN
     // ==========================================
     function getSholatDataByDate(dateStr) {
-        const stored = localStorage.getItem('sholat_history');
+        const stored = localStorage.getItem('sholat_ramadhan_history');
         let history = stored ? JSON.parse(stored) : {};
 
-        // Jika tanggal ini belum punya data, buatkan data baru
         if (!history[dateStr]) {
-            history[dateStr] = defaultSholat.map((nama, index) => ({
-                id: index,
-                nama: nama,
-                isDone: false
+            history[dateStr] = defaultSholatMaster.map(item => ({
+                ...item,
+                isDone: false,
+                completedAt: null // Menyimpan catatan jam pelaksanaan
             }));
             saveAllSholatData(history);
         }
@@ -311,7 +340,7 @@
     }
 
     function saveAllSholatData(historyObj) {
-        localStorage.setItem('sholat_history', JSON.stringify(historyObj));
+        localStorage.setItem('sholat_ramadhan_history', JSON.stringify(historyObj));
     }
 
     function renderSholat() {
@@ -319,42 +348,83 @@
         const container = document.getElementById('list-sholat');
         const labelTanggal = document.getElementById('label-tanggal-sholat');
         
-        // Ubah string tanggal YYYY-MM-DD menjadi Objek Date untuk diformat
         const parts = selectedSholatDateStr.split('-');
         const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
         
-        // Menampilkan teks Hari, Tanggal Bulan Tahun khusus bagian Sholat
         labelTanggal.innerText = `Jurnal Tanggal: ${formatDateToIndonesian(dateObj)}`;
         container.innerHTML = '';
 
-        sholatList.forEach(item => {
-            const li = document.createElement('li');
-            li.className = 'item';
-            li.innerHTML = `
-                <div class="item-left">
-                    <input type="checkbox" class="checkbox-custom" ${item.isDone ? 'checked' : ''} onchange="toggleSholat(${item.id})">
-                    <span class="${item.isDone ? 'done' : ''}">${item.nama}</span>
+        // Kelompokkan sholat Wajib dan Sunnah
+        const wajibList = sholatList.filter(s => s.jenis === 'wajib');
+        const sunnahList = sholatList.filter(s => s.jenis === 'sunnah');
+
+        // Render Sholat Wajib
+        const dividerWajib = document.createElement('div');
+        dividerWajib.className = 'section-divider';
+        dividerWajib.innerText = 'SHOLAT FARDHU (WAJIB)';
+        container.appendChild(dividerWajib);
+
+        wajibList.forEach(item => renderSholatItem(item, container));
+
+        // Render Sholat Sunnah
+        const dividerSunnah = document.createElement('div');
+        dividerSunnah.className = 'section-divider';
+        dividerSunnah.innerText = 'SHOLAT SUNNAH & RAMADHAN';
+        container.appendChild(dividerSunnah);
+
+        sunnahList.forEach(item => renderSholatItem(item, container));
+    }
+
+    function renderSholatItem(item, container) {
+        const li = document.createElement('li');
+        li.className = 'item';
+
+        // Teks jam pengerjaan (jika sudah dicentang)
+        const timestampText = item.isDone && item.completedAt ? 
+            `<span class="timestamp-text">✓ (Selesai jam ${item.completedAt})</span>` : '';
+
+        li.innerHTML = `
+            <div class="item-left">
+                <input type="checkbox" class="checkbox-custom" ${item.isDone ? 'checked' : ''} onchange="toggleSholat('${item.id}')">
+                <div>
+                    <span class="${item.isDone ? 'done' : ''}" style="font-weight: 600;">${item.nama}</span>
+                    <span class="sholat-time-info">${item.waktu}</span>
+                    ${timestampText}
                 </div>
-            `;
-            container.appendChild(li);
-        });
+            </div>
+        `;
+        container.appendChild(li);
     }
 
     function toggleSholat(id) {
-        const stored = localStorage.getItem('sholat_history');
+        const stored = localStorage.getItem('sholat_ramadhan_history');
         let history = stored ? JSON.parse(stored) : {};
         
         if (history[selectedSholatDateStr]) {
             history[selectedSholatDateStr] = history[selectedSholatDateStr].map(item => {
-                if (item.id === id) item.isDone = !item.isDone;
+                if (item.id === id) {
+                    const nextStatus = !item.isDone;
+                    
+                    // Format waktu saat ini (HH:MM WIB)
+                    const currentTime = new Date();
+                    const hours = String(currentTime.getHours()).padStart(2, '0');
+                    const minutes = String(currentTime.getMinutes()).padStart(2, '0');
+                    const timeString = `${hours}:${minutes} WIB`;
+
+                    return {
+                        ...item,
+                        isDone: nextStatus,
+                        completedAt: nextStatus ? timeString : null
+                    };
+                }
                 return item;
             });
+
             saveAllSholatData(history);
             renderSholat();
         }
     }
 
-    // Event listener saat user mengganti tanggal sholat
     pickerSholat.addEventListener('change', function(e) {
         if (e.target.value) {
             selectedSholatDateStr = e.target.value;
