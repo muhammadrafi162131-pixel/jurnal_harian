@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 650px;
+            max-width: 700px;
             margin: 0 auto;
         }
 
@@ -75,16 +75,68 @@
             border-bottom: 1px dashed #ddd;
         }
 
-        .section-divider {
-            font-size: 12px;
-            font-weight: bold;
-            color: #00897b;
-            background-color: #e0f2f1;
-            padding: 6px 10px;
-            border-radius: 6px;
-            margin: 12px 0 6px 0;
+        /* STYLING TABEL SHOLAT */
+        .sholat-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
         }
 
+        .sholat-table th, 
+        .sholat-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sholat-table th {
+            background-color: #e0f2f1;
+            color: #00695c;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .sholat-table tr:hover {
+            background-color: #fafafa;
+        }
+
+        .table-category-row {
+            background-color: #f0fdf4;
+            font-weight: bold;
+            color: #00897b;
+            font-size: 12px;
+        }
+
+        .checkbox-custom {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .done {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .sholat-time-badge {
+            font-size: 11px;
+            color: #00796b;
+            background: #e0f2f1;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .timestamp-text {
+            font-size: 11px;
+            color: #2e7d32;
+            font-weight: 600;
+        }
+
+        /* Styling List Tugas */
         .item-list {
             list-style: none;
         }
@@ -107,41 +159,13 @@
             gap: 12px;
         }
 
-        .checkbox-custom {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .done {
-            text-decoration: line-through;
-            color: #888;
-        }
-
-        .sholat-time-info {
-            font-size: 11px;
-            color: #00796b;
-            background: #e0f2f1;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 6px;
-            font-weight: 600;
-        }
-
-        .timestamp-text {
-            font-size: 11px;
-            color: #4caf50;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-
         .meta-text {
             font-size: 12px;
             color: #666;
             margin-top: 3px;
         }
 
-        /* Styling Badge Status */
+        /* Styling Badge Status Tugas */
         .badge {
             font-size: 11px;
             padding: 3px 8px;
@@ -151,25 +175,10 @@
             margin-left: 6px;
         }
 
-        .badge-success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .badge-danger {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-
-        .badge-warning {
-            background-color: #fff3e0;
-            color: #ef6c00;
-        }
-
-        .badge-info {
-            background-color: #e0f7fa;
-            color: #00838f;
-        }
+        .badge-success { background-color: #e8f5e9; color: #2e7d32; }
+        .badge-danger { background-color: #ffebee; color: #c62828; }
+        .badge-warning { background-color: #fff3e0; color: #ef6c00; }
+        .badge-info { background-color: #e0f7fa; color: #00838f; }
 
         /* Form Inputs */
         .form-group {
@@ -240,10 +249,10 @@
         <p id="tanggal-hari-ini"></p>
     </div>
 
-    <!-- SECTION 1: CHECKLIST SHOLAT ALA RAMADHAN -->
+    <!-- SECTION 1: TABEL JURNAL SHOLAT -->
     <div class="card">
         <div class="card-header-flex">
-            <div class="card-title">Jurnal Sholat</div>
+            <div class="card-title">Jurnal Sholat Harian</div>
             <div>
                 <label for="picker-tanggal-sholat" style="font-size: 12px; color: #666; margin-right: 4px;">Pilih Tanggal:</label>
                 <input type="date" id="picker-tanggal-sholat" class="input-date-mini">
@@ -252,7 +261,20 @@
 
         <div class="sholat-date-sub" id="label-tanggal-sholat"></div>
 
-        <ul class="item-list" id="list-sholat"></ul>
+        <!-- Wadah Tabel Sholat -->
+        <table class="sholat-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px; text-align: center;">Cek</th>
+                    <th>Nama Sholat</th>
+                    <th style="width: 110px;">Waktu Masuk</th>
+                    <th>Waktu Dicentang</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-sholat">
+                <!-- Data Tabel Di-render via JavaScript -->
+            </tbody>
+        </table>
     </div>
 
     <!-- SECTION 2: FORM TAMBAH TUGAS -->
@@ -284,7 +306,7 @@
 
 <script>
     // ==========================================
-    // 1. INISIALISASI WAKTU & FORMAT TANGGAL
+    // 1. FORMAT TANGGAL
     // ==========================================
     const now = new Date();
     
@@ -308,7 +330,7 @@
     const pickerSholat = document.getElementById('picker-tanggal-sholat');
     pickerSholat.value = todayStr;
 
-    // Default Master List Sholat ala Ramadhan (Wajib & Sunnah)
+    // Data Master Sholat
     const defaultSholatMaster = [
         { id: 'subuh', nama: 'Subuh', jenis: 'wajib', waktu: '04:30 WIB' },
         { id: 'dzuhur', nama: 'Dzuhur', jenis: 'wajib', waktu: '12:00 WIB' },
@@ -321,17 +343,17 @@
     ];
 
     // ==========================================
-    // 2. LOGIKA SHOLAT ALA RAMADHAN
+    // 2. LOGIKA TABEL SHOLAT
     // ==========================================
     function getSholatDataByDate(dateStr) {
-        const stored = localStorage.getItem('sholat_ramadhan_history');
+        const stored = localStorage.getItem('sholat_table_history');
         let history = stored ? JSON.parse(stored) : {};
 
         if (!history[dateStr]) {
             history[dateStr] = defaultSholatMaster.map(item => ({
                 ...item,
                 isDone: false,
-                completedAt: null // Menyimpan catatan jam pelaksanaan
+                completedAt: null
             }));
             saveAllSholatData(history);
         }
@@ -340,64 +362,66 @@
     }
 
     function saveAllSholatData(historyObj) {
-        localStorage.setItem('sholat_ramadhan_history', JSON.stringify(historyObj));
+        localStorage.setItem('sholat_table_history', JSON.stringify(historyObj));
     }
 
-    function renderSholat() {
+    function renderSholatTable() {
         const sholatList = getSholatDataByDate(selectedSholatDateStr);
-        const container = document.getElementById('list-sholat');
+        const tbody = document.getElementById('tbody-sholat');
         const labelTanggal = document.getElementById('label-tanggal-sholat');
         
         const parts = selectedSholatDateStr.split('-');
         const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
         
         labelTanggal.innerText = `Jurnal Tanggal: ${formatDateToIndonesian(dateObj)}`;
-        container.innerHTML = '';
+        tbody.innerHTML = '';
 
-        // Kelompokkan sholat Wajib dan Sunnah
         const wajibList = sholatList.filter(s => s.jenis === 'wajib');
         const sunnahList = sholatList.filter(s => s.jenis === 'sunnah');
 
-        // Render Sholat Wajib
-        const dividerWajib = document.createElement('div');
-        dividerWajib.className = 'section-divider';
-        dividerWajib.innerText = 'SHOLAT FARDHU (WAJIB)';
-        container.appendChild(dividerWajib);
+        // Header Kategori Wajib
+        const trWajib = document.createElement('tr');
+        trWajib.className = 'table-category-row';
+        trWajib.innerHTML = `<td colspan="4">SHOLAT FARDHU (WAJIB)</td>`;
+        tbody.appendChild(trWajib);
 
-        wajibList.forEach(item => renderSholatItem(item, container));
+        wajibList.forEach(item => renderRow(item, tbody));
 
-        // Render Sholat Sunnah
-        const dividerSunnah = document.createElement('div');
-        dividerSunnah.className = 'section-divider';
-        dividerSunnah.innerText = 'SHOLAT SUNNAH & RAMADHAN';
-        container.appendChild(dividerSunnah);
+        // Header Kategori Sunnah
+        const trSunnah = document.createElement('tr');
+        trSunnah.className = 'table-category-row';
+        trSunnah.innerHTML = `<td colspan="4">SHOLAT SUNNAH & RAMADHAN</td>`;
+        tbody.appendChild(trSunnah);
 
-        sunnahList.forEach(item => renderSholatItem(item, container));
+        sunnahList.forEach(item => renderRow(item, tbody));
     }
 
-    function renderSholatItem(item, container) {
-        const li = document.createElement('li');
-        li.className = 'item';
+    function renderRow(item, tbody) {
+        const tr = document.createElement('tr');
+        
+        const timestampContent = item.isDone && item.completedAt ? 
+            `<span class="timestamp-text">Selesai ${item.completedAt}</span>` : 
+            `<span style="color: #bbb; font-size: 12px;">Belum</span>`;
 
-        // Teks jam pengerjaan (jika sudah dicentang)
-        const timestampText = item.isDone && item.completedAt ? 
-            `<span class="timestamp-text">✓ (Selesai jam ${item.completedAt})</span>` : '';
-
-        li.innerHTML = `
-            <div class="item-left">
+        tr.innerHTML = `
+            <td style="text-align: center;">
                 <input type="checkbox" class="checkbox-custom" ${item.isDone ? 'checked' : ''} onchange="toggleSholat('${item.id}')">
-                <div>
-                    <span class="${item.isDone ? 'done' : ''}" style="font-weight: 600;">${item.nama}</span>
-                    <span class="sholat-time-info">${item.waktu}</span>
-                    ${timestampText}
-                </div>
-            </div>
+            </td>
+            <td>
+                <span class="${item.isDone ? 'done' : ''}" style="font-weight: 600;">${item.nama}</span>
+            </td>
+            <td>
+                <span class="sholat-time-badge">${item.waktu}</span>
+            </td>
+            <td>
+                ${timestampContent}
+            </td>
         `;
-        container.appendChild(li);
+        tbody.appendChild(tr);
     }
 
     function toggleSholat(id) {
-        const stored = localStorage.getItem('sholat_ramadhan_history');
+        const stored = localStorage.getItem('sholat_table_history');
         let history = stored ? JSON.parse(stored) : {};
         
         if (history[selectedSholatDateStr]) {
@@ -405,7 +429,6 @@
                 if (item.id === id) {
                     const nextStatus = !item.isDone;
                     
-                    // Format waktu saat ini (HH:MM WIB)
                     const currentTime = new Date();
                     const hours = String(currentTime.getHours()).padStart(2, '0');
                     const minutes = String(currentTime.getMinutes()).padStart(2, '0');
@@ -421,19 +444,19 @@
             });
 
             saveAllSholatData(history);
-            renderSholat();
+            renderSholatTable();
         }
     }
 
     pickerSholat.addEventListener('change', function(e) {
         if (e.target.value) {
             selectedSholatDateStr = e.target.value;
-            renderSholat();
+            renderSholatTable();
         }
     });
 
     // ==========================================
-    // 3. LOGIKA TUGAS & SISTEM STATUS AUTOMATIS
+    // 3. LOGIKA TUGAS
     // ==========================================
     function getTugasData() {
         return JSON.parse(localStorage.getItem('tugas_data')) || [];
@@ -545,8 +568,8 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Jalankan awal
-    renderSholat();
+    // Jalankan aplikasi
+    renderSholatTable();
     renderTugas();
 </script>
 
