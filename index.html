@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1050px;
             margin: 0 auto;
         }
 
@@ -158,7 +158,14 @@
             background-color: #fcfcfc;
         }
 
-        /* STYLING CHECKBOX & STATUS BADGES */
+        /* STYLING CHECKBOX & BADGES STATUS */
+        .cell-flex {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
         .checkbox-cell {
             width: 18px;
             height: 18px;
@@ -167,14 +174,9 @@
             vertical-align: middle;
         }
 
-        .checkbox-cell:disabled {
-            cursor: not-allowed;
-            opacity: 0.4;
-        }
-
         .status-tag {
             display: inline-block;
-            padding: 3px 6px;
+            padding: 2px 6px;
             border-radius: 4px;
             font-size: 11px;
             font-weight: bold;
@@ -182,8 +184,7 @@
 
         .status-on-time { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
         .status-late { background-color: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-        .status-missed { background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
-        .status-future { color: #999; font-style: italic; font-size: 11px; }
+        .status-missed { color: #c62828; font-size: 11px; font-weight: 600; }
 
         .summary-row {
             background-color: #e8f5e9;
@@ -235,9 +236,9 @@
 
         <!-- Legend Status -->
         <div class="status-legend">
-            <div class="legend-item"><span class="legend-badge status-on-time">✓ Tepat Waktu</span> Sholat dicentang pada waktunya</div>
-            <div class="legend-item"><span class="legend-badge status-late">✓ Terlambat</span> Sholat baru dicentang setelah lewat hari/waktu</div>
-            <div class="legend-item"><span class="legend-badge status-missed">✕ Terlewat</span> Hari sudah berlalu dan tidak dicentang</div>
+            <div class="legend-item"><span class="legend-badge status-on-time">✓ Tepat Waktu</span> Dicentang pada harinya</div>
+            <div class="legend-item"><span class="legend-badge status-late">✓ Terlambat</span> Dicentang setelah hari berlalu</div>
+            <div class="legend-item"><span class="status-missed">✕ Terlewat</span> Belum dicentang & hari sudah berlalu</div>
         </div>
 
         <div class="table-responsive">
@@ -300,21 +301,9 @@
 
 <script>
     // ==========================================
-    // 1. JAM & JADWAL SHOLAT DEFAULT
+    // 1. FORMAT TANGGAL & WAKTU
     // ==========================================
     const now = new Date();
-    
-    // Estimasi jam sholat (Format 24 Jam)
-    const sholatSchedule = {
-        subuh: "04:30",
-        dzuhur: "12:00",
-        ashar: "15:15",
-        maghrib: "18:05",
-        isya: "19:15",
-        tarawih: "19:45",
-        dhuha: "07:00",
-        tahajud: "03:00"
-    };
 
     function formatDateToYYYYMM(dateObj) {
         const year = dateObj.getFullYear();
@@ -342,9 +331,10 @@
     pickerBulan.value = currentMonthStr;
 
     const sholatKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya', 'tarawih', 'dhuha', 'tahajud'];
+    const fardhuKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
 
     // ==========================================
-    // 2. LOGIKA SHOLAT & STATUS TERLAMBAT/TEPAT
+    // 2. LOGIKA TABEL SHOLAT BULANAN
     // ==========================================
     function getMonthSholatData(yearMonthStr) {
         const stored = localStorage.getItem('sholat_monthly_matrix');
@@ -391,7 +381,6 @@
             sholatKeys.forEach(key => {
                 const itemData = dayData[key] || { checked: false, status: '' };
                 const cellContent = renderSholatCell(fullDateStr, key, itemData);
-
                 rowHtml += `<td>${cellContent}</td>`;
             });
 
@@ -403,43 +392,41 @@
     }
 
     function renderSholatCell(dateStr, key, itemData) {
-        const selectedDate = new Date(dateStr + 'T23:59:59');
         const isPastDate = dateStr < todayStr;
-        const isFutureDate = dateStr > todayStr;
-        const isToday = dateStr === todayStr;
+        const isFardhu = fardhuKeys.includes(key);
 
-        // Cek jam sholat untuk hari ini
-        let isTimePassedToday = false;
-        if (isToday) {
-            const [sholatHour, sholatMin] = sholatSchedule[key].split(':').map(Number);
-            const sholatTimeToday = new Date();
-            sholatTimeToday.setHours(sholatHour, sholatMin, 0, 0);
-            isTimePassedToday = now > sholatTimeToday;
-        }
-
-        // Jika Belum Terjadi (Masa Depan)
-        if (isFutureDate) {
-            return `<span class="status-future">-</span>`;
-        }
-
-        // Jika Sudah Dicentang
+        // Jika Dicentang
         if (itemData.checked) {
             if (itemData.status === 'late') {
-                return `<span class="status-tag status-late" onclick="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">✓ Terlambat</span>`;
+                return `
+                    <div class="cell-flex">
+                        <input type="checkbox" class="checkbox-cell" checked onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
+                        <span class="status-tag status-late">Terlambat</span>
+                    </div>
+                `;
             } else {
-                return `<span class="status-tag status-on-time" onclick="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">✓ Tepat</span>`;
+                return `
+                    <div class="cell-flex">
+                        <input type="checkbox" class="checkbox-cell" checked onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
+                        <span class="status-tag status-on-time">Tepat</span>
+                    </div>
+                `;
             }
         }
 
-        // Jika Belum Dicentang & Hari Sudah Berlalu (Terlewat / Missed)
-        if (isPastDate && ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'].includes(key)) {
-            return `<span class="status-tag status-missed" onclick="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">✕ Terlewat</span>`;
+        // Jika Belum Dicentang dan Hari Sudah Berlalu (Sholat Fardhu)
+        if (isPastDate && isFardhu) {
+            return `
+                <div class="cell-flex">
+                    <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
+                    <span class="status-missed">✕ Terlewat</span>
+                </div>
+            `;
         }
 
-        // Checkbox Normal untuk Hari Ini atau Sunnah
+        // Checkbox biasa (Hari ini / Masa depan / Sunnah)
         return `
-            <input type="checkbox" class="checkbox-cell" 
-                onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
+            <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
         `;
     }
 
@@ -458,21 +445,10 @@
         } else {
             // Tentukan status saat dicentang
             let status = 'on-time';
-            
             if (fullDateStr < todayStr) {
-                // Centang tanggal lalu -> Terlambat
+                // Centang untuk tanggal yang sudah berlalu -> Terlambat
                 status = 'late';
-            } else if (fullDateStr === todayStr) {
-                // Cek jam jika hari ini
-                const [sholatHour, sholatMin] = sholatSchedule[sholatKey].split(':').map(Number);
-                const limitTime = new Date();
-                limitTime.setHours(sholatHour + 2, sholatMin, 0, 0); // Toleransi 2 jam setelah waktu sholat
-
-                if (new Date() > limitTime) {
-                    status = 'late';
-                }
             }
-
             monthData[fullDateStr][sholatKey] = { checked: true, status: status };
         }
         
@@ -505,7 +481,7 @@
     pickerBulan.addEventListener('change', renderMatrixTable);
 
     // ==========================================
-    // 3. LOGIKA TUGAS
+    // 3. LOGIKA DAFTAR TUGAS
     // ==========================================
     function getTugasData() {
         return JSON.parse(localStorage.getItem('tugas_data')) || [];
@@ -544,7 +520,6 @@
             li.className = 'item';
 
             const status = getTaskStatus(item);
-            
             const parts = item.deadline.split('-');
             const deadlineDate = new Date(parts[0], parts[1] - 1, parts[2]);
             const formattedDeadline = formatDateToIndonesian(deadlineDate);
