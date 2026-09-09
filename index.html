@@ -103,6 +103,7 @@
         .sholat-matrix-table td {
             padding: 8px 6px;
             border: 1px solid #e0e0e0;
+            vertical-align: middle;
         }
 
         .sholat-matrix-table th {
@@ -136,11 +137,16 @@
             background-color: #f1f8f6;
         }
 
+        /* STYLING CHECKBOX */
         .checkbox-cell {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             cursor: pointer;
             accent-color: #00897b;
+            display: inline-block;
+            vertical-align: middle;
+            -webkit-appearance: checkbox;
+            appearance: checkbox;
         }
 
         .summary-row {
@@ -251,13 +257,11 @@
 <body>
 
 <div class="container">
-    <!-- Header Utama -->
     <div class="header">
         <h1>Jurnal Sholat Ramadhan & Tugas</h1>
         <p id="tanggal-hari-ini"></p>
     </div>
 
-    <!-- SECTION 1: TABEL SHOLAT MATRIKS BULANAN -->
     <div class="card">
         <div class="card-header-flex">
             <div class="card-title">Jurnal Sholat Bulanan</div>
@@ -287,18 +291,15 @@
                     </tr>
                 </thead>
                 <tbody id="tbody-matrix-sholat">
-                    <!-- Baris Tanggal di-render oleh JS -->
-                </tbody>
+                    </tbody>
                 <tfoot>
                     <tr class="summary-row" id="tfoot-total-sholat">
-                        <!-- Total Capaian Bulanan di-render oleh JS -->
-                    </tr>
+                        </tr>
                 </tfoot>
             </table>
         </div>
     </div>
 
-    <!-- SECTION 2: FORM TAMBAH TUGAS -->
     <div class="card">
         <div class="card-title" style="margin-bottom: 15px;">Tambah Tugas Baru</div>
         <form id="form-tugas">
@@ -318,7 +319,6 @@
         </form>
     </div>
 
-    <!-- SECTION 3: DAFTAR TUGAS SEKOLAH -->
     <div class="card">
         <div class="card-title" style="margin-bottom: 15px;">Daftar Tugas</div>
         <ul class="item-list" id="list-tugas"></ul>
@@ -378,7 +378,7 @@
     }
 
     function renderMatrixTable() {
-        const selectedYearMonth = pickerBulan.value; // Format: "YYYY-MM"
+        const selectedYearMonth = pickerBulan.value;
         if (!selectedYearMonth) return;
 
         const [year, month] = selectedYearMonth.split('-').map(Number);
@@ -386,18 +386,13 @@
         
         const monthData = getMonthSholatData(selectedYearMonth);
         const tbody = document.getElementById('tbody-matrix-sholat');
-        const tfoot = document.getElementById('tfoot-total-sholat');
         
         tbody.innerHTML = '';
-
-        // Hitung total terlaksana per kolom
-        const totalPerSholat = { subuh: 0, dzuhur: 0, ashar: 0, maghrib: 0, isya: 0, tarawih: 0, dhuha: 0, tahajud: 0 };
 
         for (let day = 1; day <= totalDaysInMonth; day++) {
             const dayStr = String(day).padStart(2, '0');
             const fullDateStr = `${selectedYearMonth}-${dayStr}`;
             const dateObj = new Date(year, month - 1, day);
-            
             const namaHari = dateObj.toLocaleDateString('id-ID', { weekday: 'short' });
 
             const tr = document.createElement('tr');
@@ -405,22 +400,17 @@
                 tr.className = 'today-row';
             }
 
-            // Kolom 1: Tanggal & Hari
             let rowHtml = `<td><strong>Tgl ${day}</strong> (${namaHari})</td>`;
-
-            // Data hari tersebut
             const dayData = monthData[fullDateStr] || {};
 
-            // Kolom 2-9: Checkbox Waktu Sholat
             sholatKeys.forEach(key => {
-                const isChecked = dayData[key] || false;
-                if (isChecked) totalPerSholat[key]++;
+                const isChecked = Boolean(dayData[key]);
 
                 rowHtml += `
                     <td>
                         <input type="checkbox" class="checkbox-cell" 
                             ${isChecked ? 'checked' : ''} 
-                            onchange="toggleMatrixCheck('${selectedYearMonth}', '${fullDateStr}', '${key}')">
+                            onchange="toggleMatrixCheck(this, '${selectedYearMonth}', '${fullDateStr}', '${key}')">
                     </td>
                 `;
             });
@@ -429,24 +419,41 @@
             tbody.appendChild(tr);
         }
 
-        // Render Baris Total Capaian Bulanan (Tfoot)
-        let footHtml = `<td>Total Terlaksana</td>`;
-        sholatKeys.forEach(key => {
-            footHtml += `<td>${totalPerSholat[key]} Hari</td>`;
-        });
-        tfoot.innerHTML = footHtml;
+        updateTotalSummary();
     }
 
-    function toggleMatrixCheck(yearMonthStr, fullDateStr, sholatKey) {
+    function toggleMatrixCheck(checkbox, yearMonthStr, fullDateStr, sholatKey) {
         const monthData = getMonthSholatData(yearMonthStr);
         
         if (!monthData[fullDateStr]) {
             monthData[fullDateStr] = {};
         }
 
-        monthData[fullDateStr][sholatKey] = !monthData[fullDateStr][sholatKey];
+        // Simpan status sesuai status centang checkbox saat ini
+        monthData[fullDateStr][sholatKey] = checkbox.checked;
+        
         saveMonthSholatData(yearMonthStr, monthData);
-        renderMatrixTable();
+        updateTotalSummary();
+    }
+
+    function updateTotalSummary() {
+        const selectedYearMonth = pickerBulan.value;
+        const monthData = getMonthSholatData(selectedYearMonth);
+        const tfoot = document.getElementById('tfoot-total-sholat');
+        
+        const totalPerSholat = { subuh: 0, dzuhur: 0, ashar: 0, maghrib: 0, isya: 0, tarawih: 0, dhuha: 0, tahajud: 0 };
+
+        Object.values(monthData).forEach(dayData => {
+            sholatKeys.forEach(key => {
+                if (dayData[key]) totalPerSholat[key]++;
+            });
+        });
+
+        let footHtml = `<td>Total Terlaksana</td>`;
+        sholatKeys.forEach(key => {
+            footHtml += `<td>${totalPerSholat[key]} Hari</td>`;
+        });
+        tfoot.innerHTML = footHtml;
     }
 
     pickerBulan.addEventListener('change', renderMatrixTable);
