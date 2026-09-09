@@ -51,11 +51,28 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
         .card-title {
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 15px;
             color: #00897b;
+        }
+
+        .sholat-date-sub {
+            font-size: 13px;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #ddd;
         }
 
         .item-list {
@@ -147,6 +164,16 @@
             font-size: 14px;
         }
 
+        .input-date-mini {
+            padding: 5px 8px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid #00897b;
+            outline: none;
+            color: #00897b;
+            font-weight: bold;
+        }
+
         .btn {
             background-color: #00897b;
             color: white;
@@ -180,21 +207,32 @@
 <body>
 
 <div class="container">
-    <!-- Header Aplikasi -->
+    <!-- Header Aplikasi Utama -->
     <div class="header">
         <h1>Jurnal Sholat & Catatan Tugas</h1>
         <p id="tanggal-hari-ini"></p>
     </div>
 
-    <!-- SECTION 1: CHECKLIST SHOLAT HARI INI -->
+    <!-- SECTION 1: CHECKLIST SHOLAT BERDASARKAN TANGGAL -->
     <div class="card">
-        <div class="card-title">Checklist Sholat Hari Ini</div>
+        <div class="card-header-flex">
+            <div class="card-title">Checklist Sholat</div>
+            <!-- Fitur Pilih Tanggal Sholat -->
+            <div>
+                <label for="picker-tanggal-sholat" style="font-size: 12px; color: #666; margin-right: 4px;">Pilih Tanggal:</label>
+                <input type="date" id="picker-tanggal-sholat" class="input-date-mini">
+            </div>
+        </div>
+
+        <!-- Tampilan Nama Hari, Tanggal, Bulan, Tahun untuk Sholat -->
+        <div class="sholat-date-sub" id="label-tanggal-sholat"></div>
+
         <ul class="item-list" id="list-sholat"></ul>
     </div>
 
     <!-- SECTION 2: FORM TAMBAH TUGAS -->
     <div class="card">
-        <div class="card-title">Tambah Tugas Baru</div>
+        <div class="card-title" style="margin-bottom: 15px;">Tambah Tugas Baru</div>
         <form id="form-tugas">
             <div class="form-group">
                 <label>Mata Pelajaran</label>
@@ -214,59 +252,79 @@
 
     <!-- SECTION 3: DAFTAR TUGAS SEKOLAH -->
     <div class="card">
-        <div class="card-title">Daftar Tugas</div>
+        <div class="card-title" style="margin-bottom: 15px;">Daftar Tugas</div>
         <ul class="item-list" id="list-tugas"></ul>
     </div>
 </div>
 
 <script>
     // ==========================================
-    // 1. SISTEM HARI, TANGGAL, BULAN, TAHUN
+    // 1. FORMATTER TANGGAL LENGKAP HARI, TGL, BLN, THN
     // ==========================================
     const now = new Date();
     
-    // Format tanggal Indonesia: Hari, Tanggal Bulan Tahun
-    const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('tanggal-hari-ini').innerText = now.toLocaleDateString('id-ID', optionsDate);
+    // Format YYYY-MM-DD standar
+    function formatDateToYYYYMMDD(dateObj) {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
-    // Format YYYY-MM-DD untuk komparasi tanggal tanpa mengikutsertakan jam
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    // Format Bahasa Indonesia: Hari, Tanggal Bulan Tahun
+    function formatDateToIndonesian(dateObj) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        return dateObj.toLocaleDateString('id-ID', options);
+    }
 
-    // Array default sholat
+    const todayStr = formatDateToYYYYMMDD(now);
+    document.getElementById('tanggal-hari-ini').innerText = formatDateToIndonesian(now);
+
+    // Tanggal sholat aktif yang sedang dipilih (Default: Hari ini)
+    let selectedSholatDateStr = todayStr;
+
+    // Inisialisasi input picker tanggal sholat ke hari ini
+    const pickerSholat = document.getElementById('picker-tanggal-sholat');
+    pickerSholat.value = todayStr;
+
+    // Array default 5 waktu sholat
     const defaultSholat = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
 
     // ==========================================
-    // 2. LOGIKA CHECKLIST SHOLAT
+    // 2. LOGIKA CHECKLIST SHOLAT PER TANGGAL
     // ==========================================
-    function getSholatData() {
-        const stored = localStorage.getItem('sholat_data');
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed.tanggal === todayStr) {
-                return parsed.list;
-            }
-        }
-        
-        const initialList = defaultSholat.map((nama, index) => ({
-            id: index,
-            nama: nama,
-            isDone: false
-        }));
+    function getSholatDataByDate(dateStr) {
+        const stored = localStorage.getItem('sholat_history');
+        let history = stored ? JSON.parse(stored) : {};
 
-        saveSholatData(initialList);
-        return initialList;
+        // Jika tanggal ini belum punya data, buatkan data baru
+        if (!history[dateStr]) {
+            history[dateStr] = defaultSholat.map((nama, index) => ({
+                id: index,
+                nama: nama,
+                isDone: false
+            }));
+            saveAllSholatData(history);
+        }
+
+        return history[dateStr];
     }
 
-    function saveSholatData(list) {
-        localStorage.setItem('sholat_data', JSON.stringify({
-            tanggal: todayStr,
-            list: list
-        }));
+    function saveAllSholatData(historyObj) {
+        localStorage.setItem('sholat_history', JSON.stringify(historyObj));
     }
 
     function renderSholat() {
-        const sholatList = getSholatData();
+        const sholatList = getSholatDataByDate(selectedSholatDateStr);
         const container = document.getElementById('list-sholat');
+        const labelTanggal = document.getElementById('label-tanggal-sholat');
+        
+        // Ubah string tanggal YYYY-MM-DD menjadi Objek Date untuk diformat
+        const parts = selectedSholatDateStr.split('-');
+        const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        
+        // Menampilkan teks Hari, Tanggal Bulan Tahun khusus bagian Sholat
+        labelTanggal.innerText = `Jurnal Tanggal: ${formatDateToIndonesian(dateObj)}`;
         container.innerHTML = '';
 
         sholatList.forEach(item => {
@@ -283,14 +341,26 @@
     }
 
     function toggleSholat(id) {
-        const sholatList = getSholatData();
-        const updated = sholatList.map(item => {
-            if (item.id === id) item.isDone = !item.isDone;
-            return item;
-        });
-        saveSholatData(updated);
-        renderSholat();
+        const stored = localStorage.getItem('sholat_history');
+        let history = stored ? JSON.parse(stored) : {};
+        
+        if (history[selectedSholatDateStr]) {
+            history[selectedSholatDateStr] = history[selectedSholatDateStr].map(item => {
+                if (item.id === id) item.isDone = !item.isDone;
+                return item;
+            });
+            saveAllSholatData(history);
+            renderSholat();
+        }
     }
+
+    // Event listener saat user mengganti tanggal sholat
+    pickerSholat.addEventListener('change', function(e) {
+        if (e.target.value) {
+            selectedSholatDateStr = e.target.value;
+            renderSholat();
+        }
+    });
 
     // ==========================================
     // 3. LOGIKA TUGAS & SISTEM STATUS AUTOMATIS
@@ -303,13 +373,11 @@
         localStorage.setItem('tugas_data', JSON.stringify(list));
     }
 
-    // Menentukan status tugas (Selesai, Terlambat, Hari Ini, Belum Selesai)
     function getTaskStatus(item) {
         if (item.isCompleted) {
             return { label: 'Selesai', class: 'badge-success' };
         }
 
-        // Hitung selisih tanggal deadline dengan hari ini
         if (item.deadline < todayStr) {
             return { label: 'Terlambat', class: 'badge-danger' };
         } else if (item.deadline === todayStr) {
@@ -333,18 +401,11 @@
             const li = document.createElement('li');
             li.className = 'item';
 
-            // Menghitung status tugas
             const status = getTaskStatus(item);
             
-            // Format tanggal deadline (Hari, Tanggal Bulan Tahun)
             const parts = item.deadline.split('-');
             const deadlineDate = new Date(parts[0], parts[1] - 1, parts[2]);
-            const formattedDeadline = deadlineDate.toLocaleDateString('id-ID', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            });
+            const formattedDeadline = formatDateToIndonesian(deadlineDate);
 
             li.innerHTML = `
                 <div class="item-left">
@@ -365,7 +426,6 @@
         });
     }
 
-    // Handle Simpan Form Tugas
     document.getElementById('form-tugas').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -415,7 +475,7 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Jalankan aplikasi
+    // Jalankan awal
     renderSholat();
     renderTugas();
 </script>
