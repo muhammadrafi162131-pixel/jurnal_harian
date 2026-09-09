@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jurnal Sholat & Catatan Tugas (HTML + JS)</title>
+    <title>Jurnal Sholat & Catatan Tugas</title>
     <style>
-        /* Desain UI Clean & Modern */
         * {
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -39,6 +38,11 @@
             margin-bottom: 5px;
         }
 
+        .header p {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
         .card {
             background: white;
             padding: 20px;
@@ -54,7 +58,6 @@
             color: #00897b;
         }
 
-        /* Styling List */
         .item-list {
             list-style: none;
         }
@@ -91,6 +94,37 @@
         .meta-text {
             font-size: 12px;
             color: #666;
+            margin-top: 3px;
+        }
+
+        /* Styling Badge Status */
+        .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 6px;
+        }
+
+        .badge-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-danger {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .badge-warning {
+            background-color: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .badge-info {
+            background-color: #e0f7fa;
+            color: #00838f;
         }
 
         /* Form Inputs */
@@ -155,9 +189,7 @@
     <!-- SECTION 1: CHECKLIST SHOLAT HARI INI -->
     <div class="card">
         <div class="card-title">Checklist Sholat Hari Ini</div>
-        <ul class="item-list" id="list-sholat">
-            <!-- Data Sholat di-render oleh JavaScript -->
-        </ul>
+        <ul class="item-list" id="list-sholat"></ul>
     </div>
 
     <!-- SECTION 2: FORM TAMBAH TUGAS -->
@@ -183,40 +215,38 @@
     <!-- SECTION 3: DAFTAR TUGAS SEKOLAH -->
     <div class="card">
         <div class="card-title">Daftar Tugas</div>
-        <ul class="item-list" id="list-tugas">
-            <!-- Data Tugas di-render oleh JavaScript -->
-        </ul>
+        <ul class="item-list" id="list-tugas"></ul>
     </div>
 </div>
 
 <script>
     // ==========================================
-    // 1. INISIALISASI & TANGGAL
+    // 1. SISTEM HARI, TANGGAL, BULAN, TAHUN
     // ==========================================
     const now = new Date();
+    
+    // Format tanggal Indonesia: Hari, Tanggal Bulan Tahun
     const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('tanggal-hari-ini').innerText = now.toLocaleDateString('id-ID', optionsDate);
 
-    // Format tanggal hari ini (YYYY-MM-DD)
-    const todayStr = now.toISOString().split('T')[0];
+    // Format YYYY-MM-DD untuk komparasi tanggal tanpa mengikutsertakan jam
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    // Array nama sholat
+    // Array default sholat
     const defaultSholat = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
 
     // ==========================================
-    // 2. LOGIKA SHOLAT (LOCALSTORAGE)
+    // 2. LOGIKA CHECKLIST SHOLAT
     // ==========================================
     function getSholatData() {
         const stored = localStorage.getItem('sholat_data');
         if (stored) {
             const parsed = JSON.parse(stored);
-            // Cek apakah data tersimpan milik hari ini
             if (parsed.tanggal === todayStr) {
                 return parsed.list;
             }
         }
         
-        // Buat data sholat baru jika beda hari
         const initialList = defaultSholat.map((nama, index) => ({
             id: index,
             nama: nama,
@@ -263,7 +293,7 @@
     }
 
     // ==========================================
-    // 3. LOGIKA TUGAS (LOCALSTORAGE)
+    // 3. LOGIKA TUGAS & SISTEM STATUS AUTOMATIS
     // ==========================================
     function getTugasData() {
         return JSON.parse(localStorage.getItem('tugas_data')) || [];
@@ -273,30 +303,60 @@
         localStorage.setItem('tugas_data', JSON.stringify(list));
     }
 
+    // Menentukan status tugas (Selesai, Terlambat, Hari Ini, Belum Selesai)
+    function getTaskStatus(item) {
+        if (item.isCompleted) {
+            return { label: 'Selesai', class: 'badge-success' };
+        }
+
+        // Hitung selisih tanggal deadline dengan hari ini
+        if (item.deadline < todayStr) {
+            return { label: 'Terlambat', class: 'badge-danger' };
+        } else if (item.deadline === todayStr) {
+            return { label: 'Tenggat Hari Ini', class: 'badge-warning' };
+        } else {
+            return { label: 'Belum Selesai', class: 'badge-info' };
+        }
+    }
+
     function renderTugas() {
         const tugasList = getTugasData();
         const container = document.getElementById('list-tugas');
         container.innerHTML = '';
 
         if (tugasList.length === 0) {
-            container.innerHTML = '<li class="item" style="justify-content: center; color: #888;">Belum ada tugas disubmit.</li>';
+            container.innerHTML = '<li class="item" style="justify-content: center; color: #888;">Belum ada catatan tugas.</li>';
             return;
         }
 
         tugasList.forEach(item => {
             const li = document.createElement('li');
             li.className = 'item';
+
+            // Menghitung status tugas
+            const status = getTaskStatus(item);
             
-            // Format tanggal deadline
-            const deadlineDate = new Date(item.deadline);
-            const formattedDeadline = deadlineDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            // Format tanggal deadline (Hari, Tanggal Bulan Tahun)
+            const parts = item.deadline.split('-');
+            const deadlineDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            const formattedDeadline = deadlineDate.toLocaleDateString('id-ID', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
 
             li.innerHTML = `
                 <div class="item-left">
                     <input type="checkbox" class="checkbox-custom" ${item.isCompleted ? 'checked' : ''} onchange="toggleTugas(${item.id})">
                     <div>
-                        <div class="${item.isCompleted ? 'done' : ''}" style="font-weight: 600;">${escapeHtml(item.judul)}</div>
-                        <div class="meta-text">${escapeHtml(item.mapel)} • Deadline: ${formattedDeadline}</div>
+                        <div class="${item.isCompleted ? 'done' : ''}" style="font-weight: 600;">
+                            ${escapeHtml(item.judul)}
+                            <span class="badge ${status.class}">${status.label}</span>
+                        </div>
+                        <div class="meta-text">
+                            ${escapeHtml(item.mapel)} • Deadline: ${formattedDeadline}
+                        </div>
                     </div>
                 </div>
                 <button class="btn-delete" onclick="hapusTugas(${item.id})" title="Hapus">✕</button>
@@ -305,7 +365,7 @@
         });
     }
 
-    // Handle Form Submit Tambah Tugas
+    // Handle Simpan Form Tugas
     document.getElementById('form-tugas').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -315,7 +375,7 @@
 
         const tugasList = getTugasData();
         tugasList.unshift({
-            id: Date.now(), // Unique ID menggunakan timestamp
+            id: Date.now(),
             mapel: mapel,
             judul: judul,
             deadline: deadline,
@@ -324,8 +384,6 @@
 
         saveTugasData(tugasList);
         renderTugas();
-
-        // Reset form
         this.reset();
     });
 
@@ -348,7 +406,6 @@
         }
     }
 
-    // Mencegah XSS Attack
     function escapeHtml(text) {
         return text
             .replace(/&/g, "&amp;")
@@ -358,7 +415,7 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Jalankan render awal saat halaman terbuka
+    // Jalankan aplikasi
     renderSholat();
     renderTugas();
 </script>
