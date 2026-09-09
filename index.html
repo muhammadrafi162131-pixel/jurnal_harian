@@ -143,6 +143,16 @@
             font-weight: normal;
         }
 
+        .clickable-cell {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .clickable-cell:hover {
+            background-color: #f0fdf4;
+        }
+
         .today-row {
             background-color: #e0f2f1 !important;
             font-weight: bold;
@@ -181,7 +191,7 @@
 
         .status-on-time { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
         .status-late { background-color: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-        .status-missed { color: #d32f2f; font-size: 11px; font-weight: 600; }
+        .status-missed { color: #d32f2f; font-size: 11px; font-weight: 600; cursor: pointer; }
 
         .summary-row {
             background-color: #e8f5e9;
@@ -364,7 +374,7 @@
             sholatKeys.forEach(key => {
                 const itemData = dayData[key] || { checked: false, status: '' };
                 const cellContent = renderSholatCell(fullDateStr, key, itemData);
-                rowHtml += `<td>${cellContent}</td>`;
+                rowHtml += `<td class="clickable-cell" onclick="toggleMatrixCheck('${selectedYearMonth}', '${fullDateStr}', '${key}')">${cellContent}</td>`;
             });
 
             tr.innerHTML = rowHtml;
@@ -378,34 +388,29 @@
         const isPastDate = dateStr < todayStr;
         const isFardhu = fardhuKeys.includes(key);
 
-        // 1. Jika sudah dicentang
         if (itemData && itemData.checked) {
             if (itemData.status === 'late') {
                 return `
                     <div class="cell-flex">
-                        <input type="checkbox" class="checkbox-cell" checked onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
+                        <input type="checkbox" class="checkbox-cell" checked onclick="event.stopPropagation()">
                         <span class="status-tag status-late">Terlambat</span>
                     </div>
                 `;
             } else {
                 return `
                     <div class="cell-flex">
-                        <input type="checkbox" class="checkbox-cell" checked onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
+                        <input type="checkbox" class="checkbox-cell" checked onclick="event.stopPropagation()">
                         <span class="status-tag status-on-time">Tepat</span>
                     </div>
                 `;
             }
         }
 
-        // 2. Belum dicentang + Hari sudah berlalu + Sholat Fardhu/Wajib
         if (isPastDate && isFardhu) {
             return `<span class="status-missed">❌ Terlewat</span>`;
         }
 
-        // 3. Tanggal hari ini / mendatang / sholat sunnah belum dicentang
-        return `
-            <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${pickerBulan.value}', '${dateStr}', '${key}')">
-        `;
+        return `<input type="checkbox" class="checkbox-cell" onclick="event.stopPropagation()">`;
     }
 
     function toggleMatrixCheck(yearMonthStr, fullDateStr, sholatKey) {
