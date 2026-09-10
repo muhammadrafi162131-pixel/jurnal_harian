@@ -287,6 +287,7 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     const now = new Date();
 
     function formatDateToYYYYMM(dateObj) {
@@ -363,7 +364,7 @@
 
             sholatKeys.forEach(key => {
                 const itemData = dayData[key] || { checked: false, status: '' };
-                const cellContent = renderSholatCell(selectedYearMonth, fullDateStr, key, itemData);
+                const cellContent = renderSholatCell(fullDateStr, key, itemData);
                 rowHtml += `<td>${cellContent}</td>`;
             });
 
@@ -374,65 +375,57 @@
         updateTotalSummary();
     }
 
-    function renderSholatCell(yearMonthStr, dateStr, key, itemData) {
+    function renderSholatCell(dateStr, key, itemData) {
         const isPastDate = dateStr < todayStr;
         const isFardhu = fardhuKeys.includes(key);
 
-        // 1. JIKA SUDAH DICENTANG (Tersimpan sebagai Terlaksana)
         if (itemData && itemData.checked) {
-            if (itemData.status === 'late') {
-                return `
-                    <div class="cell-flex">
-                        <input type="checkbox" class="checkbox-cell" checked onchange="toggleMatrixCheck('${yearMonthStr}', '${dateStr}', '${key}', this.checked)">
-                        <span class="status-tag status-late">Terlambat</span>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="cell-flex">
-                        <input type="checkbox" class="checkbox-cell" checked onchange="toggleMatrixCheck('${yearMonthStr}', '${dateStr}', '${key}', this.checked)">
-                        <span class="status-tag status-on-time">Tepat</span>
-                    </div>
-                `;
-            }
+            const badgeClass = itemData.status === 'late' ? 'status-late' : 'status-on-time';
+            const badgeText = itemData.status === 'late' ? 'Terlambat' : 'Tepat';
+            return `
+                <div class="cell-flex">
+                    <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}" checked>
+                    <span class="status-tag ${badgeClass}">${badgeText}</span>
+                </div>
+            `;
         }
 
-        // 2. JIKA BELUM DICENTANG & HARI SUDAH BERLALU & SHOLAT WAJIB
         if (isPastDate && isFardhu) {
             return `
                 <div class="cell-flex">
-                    <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${yearMonthStr}', '${dateStr}', '${key}', this.checked)">
+                    <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}">
                     <span class="status-missed">❌ Terlewat</span>
                 </div>
             `;
         }
 
-        // 3. JIKA BELUM DICENTANG (Hari Ini / Masa Depan / Sunnah)
         return `
-            <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${yearMonthStr}', '${dateStr}', '${key}', this.checked)">
+            <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}">
         `;
     }
 
-    function toggleMatrixCheck(yearMonthStr, fullDateStr, sholatKey, isChecked) {
-        const monthData = getMonthSholatData(yearMonthStr);
-        
-        if (!monthData[fullDateStr]) {
-            monthData[fullDateStr] = {};
-        }
+    // Event Listener Tabel Sholat (Event Delegation)
+    document.getElementById('tbody-matrix-sholat').addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('sholat-check')) {
+            const dateStr = e.target.getAttribute('data-date');
+            const sholatKey = e.target.getAttribute('data-key');
+            const isChecked = e.target.checked;
+            const selectedYearMonth = pickerBulan.value;
 
-        if (isChecked) {
-            // Tentukan status saat dicentang: Tepat Waktu (hari ini/mendatang) atau Terlambat (hari berlalu)
-            let status = (fullDateStr < todayStr) ? 'late' : 'on-time';
-            monthData[fullDateStr][sholatKey] = { checked: true, status: status };
-        } else {
-            // Jika uncheck/di-batal centang, kembalikan ke kondisi belum dikerjakan
-            monthData[fullDateStr][sholatKey] = { checked: false, status: '' };
+            const monthData = getMonthSholatData(selectedYearMonth);
+            if (!monthData[dateStr]) monthData[dateStr] = {};
+
+            if (isChecked) {
+                let status = (dateStr < todayStr) ? 'late' : 'on-time';
+                monthData[dateStr][sholatKey] = { checked: true, status: status };
+            } else {
+                monthData[dateStr][sholatKey] = { checked: false, status: '' };
+            }
+
+            saveMonthSholatData(selectedYearMonth, monthData);
+            renderMatrixTable();
         }
-        
-        // Simpan ke LocalStorage dan refresh tampilan secara eksplisit
-        saveMonthSholatData(yearMonthStr, monthData);
-        renderMatrixTable();
-    }
+    });
 
     function updateTotalSummary() {
         const selectedYearMonth = pickerBulan.value;
@@ -458,7 +451,7 @@
 
     pickerBulan.addEventListener('change', renderMatrixTable);
 
-    // LOGIKA CATATAN TUGAS
+    // LOGIKA TUGAS
     function getTugasData() {
         return JSON.parse(localStorage.getItem('tugas_data')) || [];
     }
@@ -495,7 +488,7 @@
 
             li.innerHTML = `
                 <div class="item-left">
-                    <input type="checkbox" class="checkbox-cell" ${item.isCompleted ? 'checked' : ''} onchange="toggleTugas(${item.id})">
+                    <input type="checkbox" class="checkbox-cell tugas-check" data-id="${item.id}" ${item.isCompleted ? 'checked' : ''}>
                     <div>
                         <div class="${item.isCompleted ? 'done' : ''}" style="font-weight: 600;">
                             ${escapeHtml(item.judul)}
@@ -506,11 +499,36 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn-delete" onclick="hapusTugas(${item.id})" title="Hapus">✕</button>
+                <button class="btn-delete" data-id="${item.id}" title="Hapus">✕</button>
             `;
             container.appendChild(li);
         });
     }
+
+    document.getElementById('list-tugas').addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('tugas-check')) {
+            const id = Number(e.target.getAttribute('data-id'));
+            const tugasList = getTugasData();
+            const updated = tugasList.map(item => {
+                if (item.id === id) item.isCompleted = e.target.checked;
+                return item;
+            });
+            saveTugasData(updated);
+            renderTugas();
+        }
+    });
+
+    document.getElementById('list-tugas').addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('btn-delete')) {
+            const id = Number(e.target.getAttribute('data-id'));
+            if (confirm('Apakah kamu yakin ingin menghapus tugas ini?')) {
+                const tugasList = getTugasData();
+                const filtered = tugasList.filter(item => item.id !== id);
+                saveTugasData(filtered);
+                renderTugas();
+            }
+        }
+    });
 
     document.getElementById('form-tugas').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -532,25 +550,6 @@
         this.reset();
     });
 
-    function toggleTugas(id) {
-        const tugasList = getTugasData();
-        const updated = tugasList.map(item => {
-            if (item.id === id) item.isCompleted = !item.isCompleted;
-            return item;
-        });
-        saveTugasData(updated);
-        renderTugas();
-    }
-
-    function hapusTugas(id) {
-        if (confirm('Apakah kamu yakin ingin menghapus tugas ini?')) {
-            const tugasList = getTugasData();
-            const filtered = tugasList.filter(item => item.id !== id);
-            saveTugasData(filtered);
-            renderTugas();
-        }
-    }
-
     function escapeHtml(text) {
         return text
             .replace(/&/g, "&amp;")
@@ -562,6 +561,7 @@
 
     renderMatrixTable();
     renderTugas();
+});
 </script>
 
 </body>
