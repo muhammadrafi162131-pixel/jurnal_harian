@@ -1,581 +1,189 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jurnal Sholat Bulanan Ramadhan & Catatan Tugas</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="description" content="Aplikasi Mobile HTML5 Production-Grade" />
+  
+  <!-- Apple Web App Capable -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Production Mobile App</title>
 
-        body {
-            background-color: #f4f7f6;
-            color: #333;
-            padding: 20px;
-        }
+  <!-- Web App Manifest (PWA) -->
+  <link rel="manifest" href="manifest.json" />
 
-        .container {
-            max-width: 1050px;
-            margin: 0 auto;
-        }
+  <!-- Security: Strict Content Security Policy (CSP) -->
+  <meta http-equiv="Content-Security-Policy" 
+        content="default-src 'self'; 
+                 script-src 'self' 'unsafe-inline'; 
+                 style-src 'self' 'unsafe-inline'; 
+                 img-src 'self' data: blob:; 
+                 connect-src 'self' https://api.yourdomain.com;" />
 
-        .header {
-            background-color: #00897b;
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+  <style>
+    /* CSS Reset & Variable Baseline */
+    :root {
+      --primary: #2563eb;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --border: #e2e8f0;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
 
-        .header h1 {
-            font-size: 22px;
-            margin-bottom: 5px;
-        }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card-bg: #1e293b;
+        --text: #f8fafc;
+        --border: #334155;
+      }
+    }
 
-        .header p {
-            font-size: 15px;
-            font-weight: 500;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none; /* Mencegah seleksi teks ala native app */
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+      overflow: hidden;
+    }
 
-        .card-header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 16px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-        .card-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #00897b;
-        }
+    main {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
 
-        .month-picker-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .status-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
 
-        .input-month {
-            padding: 6px 12px;
-            font-size: 13px;
-            border-radius: 6px;
-            border: 1px solid #00897b;
-            outline: none;
-            color: #00897b;
-            font-weight: bold;
-            background: #fff;
-        }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+    .badge.online { background: #dcfce7; color: #166534; }
+    .badge.offline { background: #fee2e2; color: #991b1b; }
 
-        .status-legend {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            font-size: 12px;
-            margin-bottom: 15px;
-            background: #f9f9f9;
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid #eee;
-        }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+    input, button {
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 1rem;
+      outline: none;
+    }
 
-        .legend-badge {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-        }
+    input {
+      background: var(--card-bg);
+      color: var(--text);
+    }
 
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
 
-        .sholat-matrix-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            text-align: center;
-            white-space: nowrap;
-        }
+    button:active {
+      opacity: 0.8;
+    }
 
-        .sholat-matrix-table th, 
-        .sholat-matrix-table td {
-            padding: 8px 6px;
-            border: 1px solid #e0e0e0;
-            vertical-align: middle;
-        }
+    ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
-        .sholat-matrix-table th {
-            background-color: #00897b;
-            color: white;
-            font-weight: 600;
-            font-size: 12px;
-        }
-
-        .sholat-matrix-table th.sub-header {
-            background-color: #00796b;
-            font-size: 11px;
-            font-weight: normal;
-        }
-
-        .today-row {
-            background-color: #e0f2f1 !important;
-            font-weight: bold;
-        }
-
-        .today-row td:first-child {
-            color: #00897b;
-        }
-
-        .sholat-matrix-table tr:nth-child(even):not(.today-row) {
-            background-color: #fcfcfc;
-        }
-
-        .cell-flex {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .checkbox-cell {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #00897b;
-            vertical-align: middle;
-        }
-
-        .status-tag {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .status-on-time { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
-        .status-late { background-color: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-        .status-missed { color: #d32f2f; font-size: 11px; font-weight: 600; }
-
-        .summary-row {
-            background-color: #e8f5e9;
-            font-weight: bold;
-            color: #2e7d32;
-        }
-
-        .item-list { list-style: none; }
-        .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .item:last-child { border-bottom: none; }
-        .item-left { display: flex; align-items: center; gap: 12px; }
-        .done { text-decoration: line-through; color: #888; }
-        .meta-text { font-size: 12px; color: #666; margin-top: 3px; }
-
-        .badge { font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: bold; display: inline-block; margin-left: 6px; }
-        .badge-success { background-color: #e8f5e9; color: #2e7d32; }
-        .badge-danger { background-color: #ffebee; color: #c62828; }
-        .badge-warning { background-color: #fff3e0; color: #ef6c00; }
-        .badge-info { background-color: #e0f7fa; color: #00838f; }
-
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; margin-bottom: 4px; color: #555; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-
-        .btn { background-color: #00897b; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn:hover { background-color: #00796b; }
-        .btn-delete { color: #e53935; background: none; border: none; font-size: 18px; font-weight: bold; cursor: pointer; padding: 0 8px; }
-    </style>
+    li {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>Jurnal Sholat Ramadhan & Tugas</h1>
-        <p id="tanggal-hari-ini"></p>
+  <header>
+    Secure Mobile App
+  </header>
+
+  <main>
+    <!-- Card Status Koneksi & Sinkronisasi -->
+    <div class="status-card">
+      <h3>Status Aplikasi</h3>
+      <div>Koneksi: <span id="network-status" class="badge offline">Memeriksa...</span></div>
+      <div style="margin-top: 8px; font-size: 0.9rem; color: #64748b;">
+        Item Pending Sync: <strong id="sync-count">0</strong>
+      </div>
     </div>
 
-    <div class="card">
-        <div class="card-header-flex">
-            <div class="card-title">Jurnal Sholat Bulanan</div>
-            <div class="month-picker-container">
-                <label for="picker-bulan" style="font-size: 12px; color: #555;">Pilih Bulan:</label>
-                <input type="month" id="picker-bulan" class="input-month">
-            </div>
-        </div>
-
-        <div class="status-legend">
-            <div class="legend-item"><span class="legend-badge status-on-time">✓ Tepat Waktu</span> Dicentang pada harinya</div>
-            <div class="legend-item"><span class="legend-badge status-late">✓ Terlambat</span> Dicentang setelah hari berlalu</div>
-            <div class="legend-item"><span class="status-missed">❌ Terlewat</span> Belum dicentang & hari sudah berlalu</div>
-        </div>
-
-        <div class="table-responsive">
-            <table class="sholat-matrix-table">
-                <thead>
-                    <tr>
-                        <th rowspan="2" style="width: 120px;">Tanggal / Hari</th>
-                        <th colspan="5">Sholat Fardhu (Wajib)</th>
-                        <th colspan="3">Sholat Sunnah & Ramadhan</th>
-                    </tr>
-                    <tr>
-                        <th class="sub-header">Subuh<br><small>04:30</small></th>
-                        <th class="sub-header">Dzuhur<br><small>12:00</small></th>
-                        <th class="sub-header">Ashar<br><small>15:15</small></th>
-                        <th class="sub-header">Maghrib<br><small>18:05</small></th>
-                        <th class="sub-header">Isya<br><small>19:15</small></th>
-                        <th class="sub-header">Tarawih<br><small>19:45</small></th>
-                        <th class="sub-header">Dhuha<br><small>07:00</small></th>
-                        <th class="sub-header">Tahajud<br><small>03:00</small></th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-matrix-sholat"></tbody>
-                <tfoot>
-                    <tr class="summary-row" id="tfoot-total-sholat"></tr>
-                </tfoot>
-            </table>
-        </div>
+    <!-- Form Input Data Terenkripsi -->
+    <div class="status-card">
+      <h3>Tambah Data (Offline-First)</h3>
+      <form id="data-form">
+        <input type="text" id="data-input" placeholder="Masukkan catatan rahasia..." required />
+        <button type="submit">Simpan ke DB Terenkripsi</button>
+      </form>
     </div>
 
-    <div class="card">
-        <div class="card-title" style="margin-bottom: 15px;">Tambah Tugas Baru</div>
-        <form id="form-tugas">
-            <div class="form-group">
-                <label for="mapel">Mata Pelajaran</label>
-                <input type="text" id="mapel" class="form-control" placeholder="Contoh: Matematika" required>
-            </div>
-            <div class="form-group">
-                <label for="judul">Judul Tugas</label>
-                <input type="text" id="judul" class="form-control" placeholder="Contoh: PR Halaman 42" required>
-            </div>
-            <div class="form-group">
-                <label for="deadline">Deadline</label>
-                <input type="date" id="deadline" class="form-control" required>
-            </div>
-            <button type="submit" class="btn">Simpan Tugas</button>
-        </form>
+    <!-- List Data Lokal -->
+    <div class="status-card" style="flex: 1; overflow-y: auto;">
+      <h3>Data Tersimpan Secara Lokal</h3>
+      <ul id="data-list" style="margin-top: 12px;"></ul>
     </div>
+  </main>
 
-    <div class="card">
-        <div class="card-title" style="margin-bottom: 15px;">Daftar Tugas</div>
-        <ul class="item-list" id="list-tugas"></ul>
-    </div>
-</div>
-
-<script>
-// Penanganan aman untuk LocalStorage agar tidak crash
-const memoryStorage = {};
-function safeGetItem(key) {
-    try {
-        return localStorage.getItem(key);
-    } catch(e) {
-        return memoryStorage[key] || null;
-    }
-}
-function safeSetItem(key, value) {
-    try {
-        localStorage.setItem(key, value);
-    } catch(e) {
-        memoryStorage[key] = value;
-    }
-}
-
-const now = new Date();
-
-function formatDateToYYYYMM(dateObj) {
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
-}
-
-function formatDateToYYYYMMDD(dateObj) {
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-function formatDateToIndonesian(dateObj) {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return dateObj.toLocaleDateString('id-ID', options);
-}
-
-const todayStr = formatDateToYYYYMMDD(now);
-const currentMonthStr = formatDateToYYYYMM(now);
-
-document.getElementById('tanggal-hari-ini').innerText = formatDateToIndonesian(now);
-const pickerBulan = document.getElementById('picker-bulan');
-pickerBulan.value = currentMonthStr;
-
-const sholatKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya', 'tarawih', 'dhuha', 'tahajud'];
-const fardhuKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
-
-function getMonthSholatData(yearMonthStr) {
-    const stored = safeGetItem('sholat_monthly_matrix');
-    let data = stored ? JSON.parse(stored) : {};
-    if (!data[yearMonthStr]) {
-        data[yearMonthStr] = {};
-    }
-    return data;
-}
-
-function saveMonthSholatData(yearMonthStr, monthData) {
-    const stored = safeGetItem('sholat_monthly_matrix');
-    let data = stored ? JSON.parse(stored) : {};
-    data[yearMonthStr] = monthData;
-    safeSetItem('sholat_monthly_matrix', JSON.stringify(data));
-}
-
-function renderMatrixTable() {
-    const selectedYearMonth = pickerBulan.value;
-    if (!selectedYearMonth) return;
-
-    const parts = selectedYearMonth.split('-');
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10);
-    const totalDaysInMonth = new Date(year, month, 0).getDate();
-    
-    const monthData = getMonthSholatData(selectedYearMonth);
-    const tbody = document.getElementById('tbody-matrix-sholat');
-    
-    tbody.innerHTML = '';
-
-    for (let day = 1; day <= totalDaysInMonth; day++) {
-        const dayStr = String(day).padStart(2, '0');
-        const fullDateStr = `${selectedYearMonth}-${dayStr}`;
-        const dateObj = new Date(year, month - 1, day);
-        const namaHari = dateObj.toLocaleDateString('id-ID', { weekday: 'short' });
-
-        const tr = document.createElement('tr');
-        if (fullDateStr === todayStr) {
-            tr.className = 'today-row';
-        }
-
-        let rowHtml = `<td><strong>Tgl ${day}</strong> (${namaHari})</td>`;
-        const dayData = monthData[fullDateStr] || {};
-
-        sholatKeys.forEach(key => {
-            const itemData = dayData[key] || { checked: false, status: '' };
-            const cellContent = renderSholatCell(fullDateStr, key, itemData);
-            rowHtml += `<td>${cellContent}</td>`;
-        });
-
-        tr.innerHTML = rowHtml;
-        tbody.appendChild(tr);
-    }
-
-    updateTotalSummary();
-}
-
-function renderSholatCell(dateStr, key, itemData) {
-    const isPastDate = dateStr < todayStr;
-    const isFardhu = fardhuKeys.includes(key);
-
-    if (itemData && itemData.checked) {
-        const badgeClass = itemData.status === 'late' ? 'status-late' : 'status-on-time';
-        const badgeText = itemData.status === 'late' ? 'Terlambat' : 'Tepat';
-        return `
-            <div class="cell-flex">
-                <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}" checked>
-                <span class="status-tag ${badgeClass}">${badgeText}</span>
-            </div>
-        `;
-    }
-
-    if (isPastDate && isFardhu) {
-        return `
-            <div class="cell-flex">
-                <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}">
-                <span class="status-missed">❌ Terlewat</span>
-            </div>
-        `;
-    }
-
-    return `
-        <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}">
-    `;
-}
-
-// Event delegation langsung ke tabel
-document.getElementById('tbody-matrix-sholat').addEventListener('click', function(e) {
-    if (e.target && e.target.classList.contains('sholat-check')) {
-        const dateStr = e.target.getAttribute('data-date');
-        const sholatKey = e.target.getAttribute('data-key');
-        const isChecked = e.target.checked;
-        const selectedYearMonth = pickerBulan.value;
-
-        const monthData = getMonthSholatData(selectedYearMonth);
-        if (!monthData[dateStr]) monthData[dateStr] = {};
-
-        if (isChecked) {
-            let status = (dateStr < todayStr) ? 'late' : 'on-time';
-            monthData[dateStr][sholatKey] = { checked: true, status: status };
-        } else {
-            monthData[dateStr][sholatKey] = { checked: false, status: '' };
-        }
-
-        saveMonthSholatData(selectedYearMonth, monthData);
-        renderMatrixTable();
-    }
-});
-
-function updateTotalSummary() {
-    const selectedYearMonth = pickerBulan.value;
-    const monthData = getMonthSholatData(selectedYearMonth);
-    const tfoot = document.getElementById('tfoot-total-sholat');
-    
-    const totalPerSholat = { subuh: 0, dzuhur: 0, ashar: 0, maghrib: 0, isya: 0, tarawih: 0, dhuha: 0, tahajud: 0 };
-
-    Object.values(monthData).forEach(dayData => {
-        sholatKeys.forEach(key => {
-            if (dayData[key] && dayData[key].checked) {
-                totalPerSholat[key]++;
-            }
-        });
-    });
-
-    let footHtml = `<td>Total Terlaksana</td>`;
-    sholatKeys.forEach(key => {
-        footHtml += `<td>${totalPerSholat[key]} Hari</td>`;
-    });
-    tfoot.innerHTML = footHtml;
-}
-
-pickerBulan.addEventListener('change', renderMatrixTable);
-
-// LOGIKA TUGAS
-function getTugasData() {
-    const stored = safeGetItem('tugas_data');
-    return stored ? JSON.parse(stored) : [];
-}
-
-function saveTugasData(list) {
-    safeSetItem('tugas_data', JSON.stringify(list));
-}
-
-function getTaskStatus(item) {
-    if (item.isCompleted) return { label: 'Selesai', class: 'badge-success' };
-    if (item.deadline < todayStr) return { label: 'Terlambat', class: 'badge-danger' };
-    if (item.deadline === todayStr) return { label: 'Tenggat Hari Ini', class: 'badge-warning' };
-    return { label: 'Belum Selesai', class: 'badge-info' };
-}
-
-function renderTugas() {
-    const tugasList = getTugasData();
-    const container = document.getElementById('list-tugas');
-    container.innerHTML = '';
-
-    if (tugasList.length === 0) {
-        container.innerHTML = '<li class="item" style="justify-content: center; color: #888;">Belum ada catatan tugas.</li>';
-        return;
-    }
-
-    tugasList.forEach(item => {
-        const li = document.createElement('li');
-        li.className = 'item';
-
-        const status = getTaskStatus(item);
-        const parts = item.deadline.split('-');
-        const deadlineDate = new Date(parts[0], parts[1] - 1, parts[2]);
-        const formattedDeadline = formatDateToIndonesian(deadlineDate);
-
-        li.innerHTML = `
-            <div class="item-left">
-                <input type="checkbox" class="checkbox-cell tugas-check" data-id="${item.id}" ${item.isCompleted ? 'checked' : ''}>
-                <div>
-                    <div class="${item.isCompleted ? 'done' : ''}" style="font-weight: 600;">
-                        ${escapeHtml(item.judul)}
-                        <span class="badge ${status.class}">${status.label}</span>
-                    </div>
-                    <div class="meta-text">
-                        ${escapeHtml(item.mapel)} • Deadline: ${formattedDeadline}
-                    </div>
-                </div>
-            </div>
-            <button class="btn-delete" data-id="${item.id}" title="Hapus">✕</button>
-        `;
-        container.appendChild(li);
-    });
-}
-
-document.getElementById('list-tugas').addEventListener('click', function(e) {
-    if (e.target && e.target.classList.contains('tugas-check')) {
-        const id = Number(e.target.getAttribute('data-id'));
-        const tugasList = getTugasData();
-        const updated = tugasList.map(item => {
-            if (item.id === id) item.isCompleted = e.target.checked;
-            return item;
-        });
-        saveTugasData(updated);
-        renderTugas();
-    } else if (e.target && e.target.classList.contains('btn-delete')) {
-        const id = Number(e.target.getAttribute('data-id'));
-        if (confirm('Apakah kamu yakin ingin menghapus tugas ini?')) {
-            const tugasList = getTugasData();
-            const filtered = tugasList.filter(item => item.id !== id);
-            saveTugasData(filtered);
-            renderTugas();
-        }
-    }
-});
-
-document.getElementById('form-tugas').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const mapel = document.getElementById('mapel').value;
-    const judul = document.getElementById('judul').value;
-    const deadline = document.getElementById('deadline').value;
-
-    const tugasList = getTugasData();
-    tugasList.unshift({
-        id: Date.now(),
-        mapel: mapel,
-        judul: judul,
-        deadline: deadline,
-        isCompleted: false
-    });
-
-    saveTugasData(tugasList);
-    renderTugas();
-    this.reset();
-});
-
-function escapeHtml(text) {
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-// Inisialisasi Tampilan
-renderMatrixTable();
-renderTugas();
-</script>
-
+  <!-- Script Logika Aplikasi -->
+  <script src="app.js"></script>
 </body>
 </html>
