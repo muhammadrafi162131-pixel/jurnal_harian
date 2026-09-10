@@ -143,16 +143,6 @@
             font-weight: normal;
         }
 
-        .clickable-cell {
-            cursor: pointer;
-            user-select: none;
-            transition: background-color 0.2s;
-        }
-
-        .clickable-cell:hover {
-            background-color: #f0fdf4;
-        }
-
         .today-row {
             background-color: #e0f2f1 !important;
             font-weight: bold;
@@ -191,7 +181,7 @@
 
         .status-on-time { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
         .status-late { background-color: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-        .status-missed { color: #d32f2f; font-size: 11px; font-weight: 600; cursor: pointer; }
+        .status-missed { color: #d32f2f; font-size: 11px; font-weight: 600; }
 
         .summary-row {
             background-color: #e8f5e9;
@@ -373,8 +363,8 @@
 
             sholatKeys.forEach(key => {
                 const itemData = dayData[key] || { checked: false, status: '' };
-                const cellContent = renderSholatCell(fullDateStr, key, itemData);
-                rowHtml += `<td class="clickable-cell" onclick="toggleMatrixCheck('${selectedYearMonth}', '${fullDateStr}', '${key}')">${cellContent}</td>`;
+                const cellContent = renderSholatCell(selectedYearMonth, fullDateStr, key, itemData);
+                rowHtml += `<td>${cellContent}</td>`;
             });
 
             tr.innerHTML = rowHtml;
@@ -384,54 +374,62 @@
         updateTotalSummary();
     }
 
-    function renderSholatCell(dateStr, key, itemData) {
+    function renderSholatCell(yearMonthStr, dateStr, key, itemData) {
         const isPastDate = dateStr < todayStr;
         const isFardhu = fardhuKeys.includes(key);
 
+        // 1. JIKA SUDAH DICENTANG (Tersimpan sebagai Terlaksana)
         if (itemData && itemData.checked) {
             if (itemData.status === 'late') {
                 return `
                     <div class="cell-flex">
-                        <input type="checkbox" class="checkbox-cell" checked onclick="event.stopPropagation()">
+                        <input type="checkbox" class="checkbox-cell" checked onchange="toggleMatrixCheck('${yearMonthStr}', '${dateStr}', '${key}', this.checked)">
                         <span class="status-tag status-late">Terlambat</span>
                     </div>
                 `;
             } else {
                 return `
                     <div class="cell-flex">
-                        <input type="checkbox" class="checkbox-cell" checked onclick="event.stopPropagation()">
+                        <input type="checkbox" class="checkbox-cell" checked onchange="toggleMatrixCheck('${yearMonthStr}', '${dateStr}', '${key}', this.checked)">
                         <span class="status-tag status-on-time">Tepat</span>
                     </div>
                 `;
             }
         }
 
+        // 2. JIKA BELUM DICENTANG & HARI SUDAH BERLALU & SHOLAT WAJIB
         if (isPastDate && isFardhu) {
-            return `<span class="status-missed">❌ Terlewat</span>`;
+            return `
+                <div class="cell-flex">
+                    <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${yearMonthStr}', '${dateStr}', '${key}', this.checked)">
+                    <span class="status-missed">❌ Terlewat</span>
+                </div>
+            `;
         }
 
-        return `<input type="checkbox" class="checkbox-cell" onclick="event.stopPropagation()">`;
+        // 3. JIKA BELUM DICENTANG (Hari Ini / Masa Depan / Sunnah)
+        return `
+            <input type="checkbox" class="checkbox-cell" onchange="toggleMatrixCheck('${yearMonthStr}', '${dateStr}', '${key}', this.checked)">
+        `;
     }
 
-    function toggleMatrixCheck(yearMonthStr, fullDateStr, sholatKey) {
+    function toggleMatrixCheck(yearMonthStr, fullDateStr, sholatKey, isChecked) {
         const monthData = getMonthSholatData(yearMonthStr);
         
         if (!monthData[fullDateStr]) {
             monthData[fullDateStr] = {};
         }
 
-        const currentItem = monthData[fullDateStr][sholatKey] || { checked: false, status: '' };
-        
-        if (currentItem && currentItem.checked) {
-            monthData[fullDateStr][sholatKey] = { checked: false, status: '' };
-        } else {
-            let status = 'on-time';
-            if (fullDateStr < todayStr) {
-                status = 'late';
-            }
+        if (isChecked) {
+            // Tentukan status saat dicentang: Tepat Waktu (hari ini/mendatang) atau Terlambat (hari berlalu)
+            let status = (fullDateStr < todayStr) ? 'late' : 'on-time';
             monthData[fullDateStr][sholatKey] = { checked: true, status: status };
+        } else {
+            // Jika uncheck/di-batal centang, kembalikan ke kondisi belum dikerjakan
+            monthData[fullDateStr][sholatKey] = { checked: false, status: '' };
         }
         
+        // Simpan ke LocalStorage dan refresh tampilan secara eksplisit
         saveMonthSholatData(yearMonthStr, monthData);
         renderMatrixTable();
     }
@@ -460,6 +458,7 @@
 
     pickerBulan.addEventListener('change', renderMatrixTable);
 
+    // LOGIKA CATATAN TUGAS
     function getTugasData() {
         return JSON.parse(localStorage.getItem('tugas_data')) || [];
     }
