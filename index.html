@@ -4,16 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#2563eb" />
-  <meta name="description" content="Jurnal Sholat & Pelacak Tugas Sekolah Offline-First" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Jurnal Sholat & Tugas</title>
+  <meta name="description" content="Jurnal Sholat dan Pelacak Tugas Sekolah Offline-First" />
+  <title>Jurnal Sholat & Tugas Sekolah</title>
 
-  <!-- Content Security Policy (CSP) untuk Keamanan -->
-  <meta http-equiv="Content-Security-Policy" 
-        content="default-src 'self' 'unsafe-inline' data: blob:;" />
+  <!-- Security: CSP -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:;" />
 
   <style>
+    /* CSS System & Variables */
     :root {
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
@@ -22,9 +20,15 @@
       --text: #0f172a;
       --text-muted: #64748b;
       --border: #e2e8f0;
-      --success: #16a34a;
-      --warning: #d97706;
-      --danger: #dc2626;
+      
+      /* Status Colors */
+      --status-check: #16a34a;
+      --status-check-bg: #dcfce7;
+      --status-dash: #d97706;
+      --status-dash-bg: #fef3c7;
+      --status-cross: #dc2626;
+      --status-cross-bg: #fee2e2;
+
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -48,7 +52,7 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg);
       color: var(--text);
       display: flex;
@@ -59,7 +63,6 @@
       overflow: hidden;
     }
 
-    /* Header Navigasi */
     header {
       background: var(--primary);
       color: white;
@@ -67,20 +70,12 @@
       text-align: center;
       font-weight: bold;
       font-size: 1.1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    .status-badge {
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.2);
-    }
-
-    /* Main Container & Tab Swapping */
     main {
       flex: 1;
       padding: 16px;
@@ -100,7 +95,6 @@
       display: flex;
     }
 
-    /* Bottom Navigation Bar */
     nav {
       background: var(--card-bg);
       border-top: 1px solid var(--border);
@@ -109,11 +103,11 @@
       padding: 8px 0;
     }
 
-    .nav-item {
+    .nav-btn {
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -123,14 +117,13 @@
       padding: 6px 0;
     }
 
-    .nav-item.active {
+    .nav-btn.active {
       color: var(--primary);
       font-weight: bold;
     }
 
-    /* Card UI Component */
     .card {
-      background-color: var(--card-bg);
+      background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 16px;
@@ -146,35 +139,46 @@
       align-items: center;
     }
 
-    /* Grid Tombol Status Sholat */
-    .prayer-grid {
+    /* Status Control Buttons */
+    .status-group {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin-top: 8px;
     }
 
-    .btn {
-      padding: 10px 12px;
+    .status-btn {
+      padding: 10px;
       border-radius: 8px;
-      border: none;
-      font-weight: 600;
-      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-weight: bold;
+      font-size: 1.1rem;
       cursor: pointer;
-      min-height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 6px;
+      min-height: 48px;
     }
 
-    .btn-jamaah { background: #dcfce7; color: #166534; }
-    .btn-munfarid { background: #dbeafe; color: #1e40af; }
-    .btn-missed { background: #fee2e2; color: #991b1b; }
+    .status-btn[data-status="completed"].selected {
+      background: var(--status-check-bg);
+      color: var(--status-check);
+      border-color: var(--status-check);
+    }
 
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      width: 100%;
+    .status-btn[data-status="late"].selected {
+      background: var(--status-dash-bg);
+      color: var(--status-dash);
+      border-color: var(--status-dash);
+    }
+
+    .status-btn[data-status="not_done"].selected {
+      background: var(--status-cross-bg);
+      color: var(--status-cross);
+      border-color: var(--status-cross);
     }
 
     /* Form Controls */
@@ -192,149 +196,225 @@
     }
 
     input, select, textarea {
-      padding: 10px 12px;
+      padding: 12px;
       border-radius: 8px;
       border: 1px solid var(--border);
       background: var(--card-bg);
       color: var(--text);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       outline: none;
     }
 
-    /* Task List UI */
+    .btn {
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-secondary {
+      background: var(--text-muted);
+    }
+
+    .btn-danger {
+      background: var(--status-cross);
+    }
+
     .task-item {
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-      margin-bottom: 12px;
+      gap: 8px;
     }
 
     .task-item:last-child {
       border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
     }
 
     .badge {
-      padding: 2px 8px;
+      padding: 4px 8px;
       border-radius: 6px;
       font-size: 0.75rem;
       font-weight: bold;
     }
 
-    .badge-high { background: #fee2e2; color: #991b1b; }
-    .badge-medium { background: #fef3c7; color: #92400e; }
-    .badge-low { background: #e0f2fe; color: #075985; }
+    .badge-completed { background: var(--status-check-bg); color: var(--status-check); }
+    .badge-late { background: var(--status-dash-bg); color: var(--status-dash); }
+    .badge-not_done { background: var(--status-cross-bg); color: var(--status-cross); }
 
-    /* Actions Bar */
-    .action-bar {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .btn-sm {
-      min-height: 32px;
-      padding: 4px 8px;
-      font-size: 0.75rem;
+    /* Print Stylesheet */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      header, nav, form, .no-print {
+        display: none !important;
+      }
+      main {
+        overflow: visible !important;
+        padding: 0 !important;
+      }
+      .card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      .tab-content {
+        display: block !important;
+      }
+      .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+      }
+      .print-table th, .print-table td {
+        border: 1px solid #000;
+        padding: 8px;
+        text-align: left;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header App -->
   <header>
     <span>Jurnal Sholat & Tugas</span>
-    <span id="network-badge" class="status-badge">Offline Mode</span>
+    <span id="date-display" style="font-size: 0.8rem; font-weight: normal;"></span>
   </header>
 
-  <!-- Main Area -->
   <main>
     <!-- TAB 1: JURNAL SHOLAT -->
     <section id="tab-sholat" class="tab-content active">
       <div class="card">
         <div class="card-title">
-          <span>Catat Sholat Hari Ini</span>
-          <span style="font-size: 0.8rem; color: var(--text-muted);" id="current-date"></span>
+          <span>Pencatatan Sholat Harian</span>
         </div>
-        <div id="prayer-container">
-          <!-- Widget Sholat akan di-generate via JS -->
-        </div>
+        <div id="prayer-list"></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Ekspor & Cadangan Data</div>
-        <div class="action-bar">
-          <button class="btn btn-primary btn-sm" onclick="App.exportJSON()">Ekspor JSON</button>
-          <button class="btn btn-primary btn-sm" style="background:#059669;" onclick="App.exportiCal()">Ekspor iCal Tugas</button>
+      <div class="card no-print">
+        <div class="card-title">Ekspor & Laporan</div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" style="flex:1;" onclick="App.printReport()">Cetak / Simpan PDF</button>
+          <button class="btn btn-secondary" style="flex:1;" onclick="App.exportCSV()">Ekspor CSV</button>
         </div>
       </div>
     </section>
 
-    <!-- TAB 2: PELACAK TUGAS SEKOLAH -->
+    <!-- TAB 2: TUGAS SEKOLAH -->
     <section id="tab-tugas" class="tab-content">
-      <!-- Form Tambah Tugas -->
-      <div class="card">
-        <div class="card-title">Tambah Tugas Baru</div>
+      <div class="card no-print">
+        <div class="card-title" id="form-task-title">Tambah Tugas Baru</div>
         <form id="task-form">
+          <input type="hidden" id="task-id" />
           <div class="form-group">
-            <label for="task-title">Judul Tugas</label>
-            <input type="text" id="task-title" placeholder="Contoh: PR Matematika Bab 3" required />
+            <label for="task-title-input">Judul Tugas</label>
+            <input type="text" id="task-title-input" required placeholder="Contoh: Matematika Halaman 45" />
           </div>
           <div class="form-group">
-            <label for="task-subject">Mata Pelajaran</label>
-            <input type="text" id="task-subject" placeholder="Matematika / Fisika / dll" required />
+            <label for="task-subject-input">Mata Pelajaran</label>
+            <input type="text" id="task-subject-input" required placeholder="Matematika / Fisika" />
           </div>
           <div style="display: flex; gap: 8px;">
-            <div class="form-group" style="flex:1;">
-              <label for="task-due">Tenggat Waktu</label>
-              <input type="date" id="task-due" required />
+            <div class="form-group" style="flex: 1;">
+              <label for="task-due-input">Tenggat Waktu</label>
+              <input type="date" id="task-due-input" required />
             </div>
-            <div class="form-group" style="flex:1;">
-              <label for="task-priority">Prioritas</label>
-              <select id="task-priority">
-                <option value="low">Rendah</option>
-                <option value="medium" selected>Sedang</option>
-                <option value="high">Tinggi</option>
+            <div class="form-group" style="flex: 1;">
+              <label for="task-status-input">Status</label>
+              <select id="task-status-input">
+                <option value="completed">✓ Selesai</option>
+                <option value="late">– Terlambat</option>
+                <option value="not_done" selected>✗ Belum Selesai</option>
               </select>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary">Simpan Tugas</button>
+          <div style="display: flex; gap: 8px;">
+            <button type="submit" class="btn" style="flex:1;">Simpan Tugas</button>
+            <button type="button" id="cancel-edit-btn" class="btn btn-secondary" style="display:none;" onclick="App.resetTaskForm()">Batal</button>
+          </div>
         </form>
       </div>
 
-      <!-- Daftar Tugas -->
+      <!-- Filters & Task List -->
       <div class="card">
-        <div class="card-title">Daftar Tugas Sekolah</div>
-        <div id="task-list">
-          <!-- Item tugas akan di-render di sini -->
+        <div class="card-title">
+          <span>Daftar Tugas</span>
+          <select id="filter-status" onchange="App.renderTasks()" style="padding: 4px 8px; font-size: 0.8rem;">
+            <option value="all">Semua Status</option>
+            <option value="completed">✓ Selesai</option>
+            <option value="late">– Terlambat</option>
+            <option value="not_done">✗ Belum Selesai</option>
+          </select>
         </div>
+        <div id="task-list"></div>
       </div>
     </section>
+
+    <!-- PRINT-ONLY TEMPLATE -->
+    <div id="print-template" style="display: none;">
+      <h2>Laporan Jurnal Sholat & Tugas Sekolah</h2>
+      <p id="print-date-range"></p>
+
+      <h3>Record Sholat Harian</h3>
+      <table class="print-table" id="print-prayer-table">
+        <thead>
+          <tr>
+            <th>Sholat</th>
+            <th>Status</th>
+            <th>Tanda</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <h3 style="margin-top: 24px;">Daftar Tugas Sekolah</h3>
+      <table class="print-table" id="print-task-table">
+        <thead>
+          <tr>
+            <th>Tugas</th>
+            <th>Mapel</th>
+            <th>Tenggat</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </main>
 
-  <!-- Bottom Navigation -->
-  <nav>
-    <button class="nav-item active" onclick="App.switchTab('sholat', this)">
-      <span>🕌</span>
+  <nav class="no-print">
+    <button class="nav-btn active" onclick="App.switchTab('sholat', this)">
+      <span style="font-size: 1.2rem;">🕌</span>
       <span>Sholat</span>
     </button>
-    <button class="nav-item" onclick="App.switchTab('tugas', this)">
-      <span>📚</span>
+    <button class="nav-btn" onclick="App.switchTab('tugas', this)">
+      <span style="font-size: 1.2rem;">📚</span>
       <span>Tugas</span>
     </button>
   </nav>
 
-  <!-- JavaScript Logic & Offline Engine -->
   <script>
     /**
-     * IndexedDB Storage Engine (Encrypted Layer Alternative)
+     * IndexedDB Data Engine
      */
-    class LocalStorageEngine {
+    class IndexedDBEngine {
       constructor() {
-        this.dbName = 'SholatTugasDB';
+        this.dbName = 'SholatJournalDB';
         this.db = null;
       }
 
@@ -348,7 +428,9 @@
               db.createObjectStore('prayers', { keyPath: 'id' });
             }
             if (!db.objectStoreNames.contains('tasks')) {
-              db.createObjectStore('tasks', { keyPath: 'id' });
+              const taskStore = db.createObjectStore('tasks', { keyPath: 'id' });
+              taskStore.createIndex('dueDate', 'dueDate', { unique: false });
+              taskStore.createIndex('status', 'status', { unique: false });
             }
           };
 
@@ -357,33 +439,30 @@
             resolve();
           };
 
-          request.onerror = (e) => reject('Gagal membuka DB: ' + e.target.error);
+          request.onerror = (e) => reject('Database Initialization Error: ' + e.target.error);
         });
       }
 
-      async saveData(storeName, data) {
+      async put(storeName, data) {
         return new Promise((resolve) => {
           const tx = this.db.transaction([storeName], 'readwrite');
-          const store = tx.objectStore(storeName);
-          store.put(data);
+          tx.objectStore(storeName).put(data);
           tx.oncomplete = () => resolve();
         });
       }
 
-      async getAllData(storeName) {
+      async getAll(storeName) {
         return new Promise((resolve) => {
           const tx = this.db.transaction([storeName], 'readonly');
-          const store = tx.objectStore(storeName);
-          const req = store.getAll();
+          const req = tx.objectStore(storeName).getAll();
           req.onsuccess = () => resolve(req.result);
         });
       }
 
-      async deleteData(storeName, id) {
+      async delete(storeName, id) {
         return new Promise((resolve) => {
           const tx = this.db.transaction([storeName], 'readwrite');
-          const store = tx.objectStore(storeName);
-          store.delete(id);
+          tx.objectStore(storeName).delete(id);
           tx.oncomplete = () => resolve();
         });
       }
@@ -394,80 +473,93 @@
      */
     class Application {
       constructor() {
-        this.db = new LocalStorageEngine();
-        this.prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+        this.db = new IndexedDBEngine();
+        this.prayerNames = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+        this.statusIcons = {
+          completed: '✓',
+          late: '–',
+          not_done: '✗'
+        };
         this.init();
       }
 
       async init() {
         await this.db.init();
         this.setupUI();
-        this.setupNetworkMonitor();
+        await this.seedDefaultData();
         await this.renderPrayers();
         await this.renderTasks();
       }
 
       setupUI() {
-        // Render tanggal saat ini (Locale Indonesia)
+        const today = new Date();
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('id-ID', options);
+        document.getElementById('date-display').textContent = today.toLocaleDateString('id-ID', options);
+        document.getElementById('task-due-input').value = today.toISOString().split('T')[0];
 
-        // Submit listener untuk form tugas
         document.getElementById('task-form').addEventListener('submit', async (e) => {
           e.preventDefault();
-          await this.addTask();
+          await this.saveTask();
         });
       }
 
-      setupNetworkMonitor() {
-        const badge = document.getElementById('network-badge');
-        const updateStatus = () => {
-          if (navigator.onLine) {
-            badge.textContent = 'Online';
-            badge.style.background = 'rgba(34, 197, 94, 0.4)';
-          } else {
-            badge.textContent = 'Offline Mode';
-            badge.style.background = 'rgba(255, 255, 255, 0.2)';
-          }
-        };
-        window.addEventListener('online', updateStatus);
-        window.addEventListener('offline', updateStatus);
-        updateStatus();
+      async seedDefaultData() {
+        const tasks = await this.db.getAll('tasks');
+        if (tasks.length === 0) {
+          const sampleTask = {
+            id: 'task-' + Date.now(),
+            title: 'PR Matematika Bab 3',
+            subject: 'Matematika',
+            dueDate: new Date().toISOString().split('T')[0],
+            status: 'not_done',
+            updatedAt: Date.now()
+          };
+          await this.db.put('tasks', sampleTask);
+        }
       }
 
-      switchTab(tabName, el) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-        
+      switchTab(tabName, element) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
         document.getElementById(`tab-${tabName}`).classList.add('active');
-        el.classList.add('active');
+        element.classList.add('active');
       }
 
-      // --- LOGIKA JURNAL SHOLAT ---
+      // --- PRAYER JOURNAL MODULE ---
       async renderPrayers() {
-        const container = document.getElementById('prayer-container');
+        const container = document.getElementById('prayer-list');
         container.innerHTML = '';
 
         const todayKey = new Date().toISOString().split('T')[0];
-        const savedPrayers = await this.db.getAllData('prayers');
+        const savedPrayers = await this.db.getAll('prayers');
 
-        this.prayers.forEach(prayer => {
+        this.prayerNames.forEach(prayer => {
           const logId = `${prayer.toLowerCase()}-${todayKey}`;
-          const existing = savedPrayers.find(p => p.id === logId);
+          const record = savedPrayers.find(p => p.id === logId) || { status: 'not_done' };
 
           const card = document.createElement('div');
           card.style.marginBottom = '12px';
           card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <strong>${prayer}</strong>
-              <span class="badge" style="background:#f1f5f9; color:#475569;">
-                ${existing ? existing.status.toUpperCase() : 'BELUM'}
+              <span class="badge badge-${record.status}">
+                ${this.statusIcons[record.status]} ${record.status.replace('_', ' ').toUpperCase()}
               </span>
             </div>
-            <div class="prayer-grid">
-              <button class="btn btn-jamaah" onclick="App.logPrayer('${logId}', '${prayer}', 'jamaah')">Jamaah</button>
-              <button class="btn btn-munfarid" onclick="App.logPrayer('${logId}', '${prayer}', 'munfarid')">Munfarid</button>
-              <button class="btn btn-missed" onclick="App.logPrayer('${logId}', '${prayer}', 'terlewat')">Absen</button>
+            <div class="status-group">
+              <button class="status-btn ${record.status === 'completed' ? 'selected' : ''}" 
+                      data-status="completed" onclick="App.logPrayer('${logId}', '${prayer}', 'completed')">
+                ✓
+              </button>
+              <button class="status-btn ${record.status === 'late' ? 'selected' : ''}" 
+                      data-status="late" onclick="App.logPrayer('${logId}', '${prayer}', 'late')">
+                –
+              </button>
+              <button class="status-btn ${record.status === 'not_done' ? 'selected' : ''}" 
+                      data-status="not_done" onclick="App.logPrayer('${logId}', '${prayer}', 'not_done')">
+                ✗
+              </button>
             </div>
           `;
           container.appendChild(card);
@@ -477,35 +569,36 @@
       async logPrayer(id, prayerName, status) {
         const record = {
           id: id,
+          date: new Date().toISOString().split('T')[0],
           prayerName: prayerName,
           status: status,
           timestamp: Date.now(),
           synced: false
         };
 
-        await this.db.saveData('prayers', record);
+        await this.db.put('prayers', record);
         await this.renderPrayers();
       }
 
-      // --- LOGIKA TUGAS SEKOLAH ---
-      async addTask() {
-        const title = document.getElementById('task-title').value;
-        const subject = document.getElementById('task-subject').value;
-        const due = document.getElementById('task-due').value;
-        const priority = document.getElementById('task-priority').value;
+      // --- TASK MODULE ---
+      async saveTask() {
+        const idInput = document.getElementById('task-id').value;
+        const title = document.getElementById('task-title-input').value;
+        const subject = document.getElementById('task-subject-input').value;
+        const dueDate = document.getElementById('task-due-input').value;
+        const status = document.getElementById('task-status-input').value;
 
         const task = {
-          id: 'task-' + Date.now(),
+          id: idInput || 'task-' + Date.now(),
           title,
           subject,
-          due,
-          priority,
-          status: 'pending',
-          createdAt: Date.now()
+          dueDate,
+          status,
+          updatedAt: Date.now()
         };
 
-        await this.db.saveData('tasks', task);
-        document.getElementById('task-form').reset();
+        await this.db.put('tasks', task);
+        this.resetTaskForm();
         await this.renderTasks();
       }
 
@@ -513,10 +606,18 @@
         const container = document.getElementById('task-list');
         container.innerHTML = '';
 
-        const tasks = await this.db.getAllData('tasks');
+        const filter = document.getElementById('filter-status').value;
+        let tasks = await this.db.getAll('tasks');
+
+        if (filter !== 'all') {
+          tasks = tasks.filter(t => t.status === filter);
+        }
+
+        // Sort by Due Date
+        tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
         if (tasks.length === 0) {
-          container.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; text-align:center;">Belum ada tugas tersimpan.</p>`;
+          container.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:12px;">Tidak ada tugas.</p>`;
           return;
         }
 
@@ -526,82 +627,109 @@
           item.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:start;">
               <div>
-                <strong style="font-size:0.95rem;">${task.title}</strong>
-                <div style="font-size:0.8rem; color:var(--text-muted);">${task.subject}</div>
+                <strong>${task.title}</strong>
+                <div style="font-size:0.8rem; color:var(--text-muted);">${task.subject} • Tenggat: ${task.dueDate}</div>
               </div>
-              <span class="badge badge-${task.priority}">
-                ${task.priority.toUpperCase()}
+              <span class="badge badge-${task.status}">
+                ${this.statusIcons[task.status]} ${task.status.replace('_', ' ').toUpperCase()}
               </span>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
-              <span>Tenggat: ${task.due}</span>
-              <button class="btn btn-missed btn-sm" onclick="App.deleteTask('${task.id}')">Hapus</button>
+            <div class="action-row">
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="App.editTask('${task.id}')">Edit</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="App.deleteTask('${task.id}')">Hapus</button>
             </div>
           `;
           container.appendChild(item);
         });
       }
 
+      async editTask(id) {
+        const tasks = await this.db.getAll('tasks');
+        const task = tasks.find(t => t.id === id);
+        if (!task) return;
+
+        document.getElementById('task-id').value = task.id;
+        document.getElementById('task-title-input').value = task.title;
+        document.getElementById('task-subject-input').value = task.subject;
+        document.getElementById('task-due-input').value = task.dueDate;
+        document.getElementById('task-status-input').value = task.status;
+
+        document.getElementById('form-task-title').textContent = 'Edit Tugas';
+        document.getElementById('cancel-edit-btn').style.display = 'block';
+      }
+
       async deleteTask(id) {
-        await this.db.deleteData('tasks', id);
-        await this.renderTasks();
-      }
-
-      // --- EKSPOR DATA & BACKUP ---
-      async exportJSON() {
-        const prayers = await this.db.getAllData('prayers');
-        const tasks = await this.db.getAllData('tasks');
-
-        const backupData = {
-          exportedAt: new Date().toISOString(),
-          prayers,
-          tasks
-        };
-
-        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `backup-jurnal-${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-      }
-
-      async exportiCal() {
-        const tasks = await this.db.getAllData('tasks');
-        if (tasks.length === 0) {
-          alert('Tidak ada tugas untuk diekspor ke Kalender.');
-          return;
+        if (confirm('Hapus tugas ini?')) {
+          await this.db.delete('tasks', id);
+          await this.renderTasks();
         }
+      }
 
-        let ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Jurnal Sholat Tugas//ID'].join('\r\n') + '\r\n';
+      resetTaskForm() {
+        document.getElementById('task-id').value = '';
+        document.getElementById('task-form').reset();
+        document.getElementById('form-task-title').textContent = 'Tambah Tugas Baru';
+        document.getElementById('cancel-edit-btn').style.display = 'none';
+        document.getElementById('task-due-input').value = new Date().toISOString().split('T')[0];
+      }
 
-        tasks.forEach(t => {
-          const dueDate = t.due.replace(/-/g, '');
-          ics += [
-            'BEGIN:VEVENT',
-            `SUMMARY:Tugas: ${t.title} (${t.subject})`,
-            `DTSTART;VALUE=DATE:${dueDate}`,
-            `DESCRIPTION:Prioritas: ${t.priority}`,
-            'END:VEVENT',
-            ''
-          ].join('\r\n');
+      // --- EXPORT & PRINT MODULE ---
+      async printReport() {
+        const prayers = await this.db.getAll('prayers');
+        const tasks = await this.db.getAll('tasks');
+
+        const prayerBody = document.querySelector('#print-prayer-table tbody');
+        const taskBody = document.querySelector('#print-task-table tbody');
+
+        prayerBody.innerHTML = '';
+        taskBody.innerHTML = '';
+
+        this.prayerNames.forEach(p => {
+          const record = prayers.find(item => item.prayerName === p) || { status: 'not_done' };
+          prayerBody.innerHTML += `
+            <tr>
+              <td>${p}</td>
+              <td>${record.status.toUpperCase()}</td>
+              <td>${this.statusIcons[record.status]}</td>
+            </tr>
+          `;
         });
 
-        ics += 'END:VCALENDAR';
+        tasks.forEach(t => {
+          taskBody.innerHTML += `
+            <tr>
+              <td>${t.title}</td>
+              <td>${t.subject}</td>
+              <td>${t.dueDate}</td>
+              <td>${this.statusIcons[t.status]} ${t.status.toUpperCase()}</td>
+            </tr>
+          `;
+        });
 
-        const blob = new Blob([ics], { type: 'text/calendar' });
+        window.print();
+      }
+
+      async exportCSV() {
+        const tasks = await this.db.getAll('tasks');
+        let csv = 'ID,Judul,Mata Pelajaran,Tenggat Waktu,Status\n';
+
+        tasks.forEach(t => {
+          csv += `"${t.id}","${t.title}","${t.subject}","${t.dueDate}","${t.status}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'jadwal-tugas.ics';
+        a.download = `laporan-tugas-${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
       }
     }
 
-    // Pendaftaran Service Worker untuk Akses Offline (PWA)
+    // Service Worker Registration for PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        const swBlob = new Blob([`
+        const swScript = `
           const CACHE = 'v1-app-cache';
           self.addEventListener('install', e => {
             e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
@@ -609,14 +737,13 @@
           self.addEventListener('fetch', e => {
             e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
           });
-        `], { type: 'text/javascript' });
-
-        const swUrl = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swUrl).catch(() => {});
+        `;
+        const blob = new Blob([swScript], { type: 'text/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
       });
     }
 
-    // Jalankan Aplikasi
+    // Launch App
     document.addEventListener('DOMContentLoaded', () => {
       window.App = new Application();
     });
