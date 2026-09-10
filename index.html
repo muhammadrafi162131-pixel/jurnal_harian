@@ -287,281 +287,294 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const now = new Date();
-
-    function formatDateToYYYYMM(dateObj) {
-        const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        return `${year}-${month}`;
+// Penanganan aman untuk LocalStorage agar tidak crash
+const memoryStorage = {};
+function safeGetItem(key) {
+    try {
+        return localStorage.getItem(key);
+    } catch(e) {
+        return memoryStorage[key] || null;
     }
-
-    function formatDateToYYYYMMDD(dateObj) {
-        const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const day = String(dateObj.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+}
+function safeSetItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+    } catch(e) {
+        memoryStorage[key] = value;
     }
+}
 
-    function formatDateToIndonesian(dateObj) {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return dateObj.toLocaleDateString('id-ID', options);
+const now = new Date();
+
+function formatDateToYYYYMM(dateObj) {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+}
+
+function formatDateToYYYYMMDD(dateObj) {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function formatDateToIndonesian(dateObj) {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return dateObj.toLocaleDateString('id-ID', options);
+}
+
+const todayStr = formatDateToYYYYMMDD(now);
+const currentMonthStr = formatDateToYYYYMM(now);
+
+document.getElementById('tanggal-hari-ini').innerText = formatDateToIndonesian(now);
+const pickerBulan = document.getElementById('picker-bulan');
+pickerBulan.value = currentMonthStr;
+
+const sholatKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya', 'tarawih', 'dhuha', 'tahajud'];
+const fardhuKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+
+function getMonthSholatData(yearMonthStr) {
+    const stored = safeGetItem('sholat_monthly_matrix');
+    let data = stored ? JSON.parse(stored) : {};
+    if (!data[yearMonthStr]) {
+        data[yearMonthStr] = {};
     }
+    return data;
+}
 
-    const todayStr = formatDateToYYYYMMDD(now);
-    const currentMonthStr = formatDateToYYYYMM(now);
-    document.getElementById('tanggal-hari-ini').innerText = formatDateToIndonesian(now);
+function saveMonthSholatData(yearMonthStr, monthData) {
+    const stored = safeGetItem('sholat_monthly_matrix');
+    let data = stored ? JSON.parse(stored) : {};
+    data[yearMonthStr] = monthData;
+    safeSetItem('sholat_monthly_matrix', JSON.stringify(data));
+}
 
-    const pickerBulan = document.getElementById('picker-bulan');
-    pickerBulan.value = currentMonthStr;
+function renderMatrixTable() {
+    const selectedYearMonth = pickerBulan.value;
+    if (!selectedYearMonth) return;
 
-    const sholatKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya', 'tarawih', 'dhuha', 'tahajud'];
-    const fardhuKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+    const parts = selectedYearMonth.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const totalDaysInMonth = new Date(year, month, 0).getDate();
+    
+    const monthData = getMonthSholatData(selectedYearMonth);
+    const tbody = document.getElementById('tbody-matrix-sholat');
+    
+    tbody.innerHTML = '';
 
-    function getMonthSholatData(yearMonthStr) {
-        const stored = localStorage.getItem('sholat_monthly_matrix');
-        let data = stored ? JSON.parse(stored) : {};
-        if (!data[yearMonthStr]) {
-            data[yearMonthStr] = {};
-        }
-        return data;
-    }
+    for (let day = 1; day <= totalDaysInMonth; day++) {
+        const dayStr = String(day).padStart(2, '0');
+        const fullDateStr = `${selectedYearMonth}-${dayStr}`;
+        const dateObj = new Date(year, month - 1, day);
+        const namaHari = dateObj.toLocaleDateString('id-ID', { weekday: 'short' });
 
-    function saveMonthSholatData(yearMonthStr, monthData) {
-        const stored = localStorage.getItem('sholat_monthly_matrix');
-        let data = stored ? JSON.parse(stored) : {};
-        data[yearMonthStr] = monthData;
-        localStorage.setItem('sholat_monthly_matrix', JSON.stringify(data));
-    }
-
-    function renderMatrixTable() {
-        const selectedYearMonth = pickerBulan.value;
-        if (!selectedYearMonth) return;
-
-        const parts = selectedYearMonth.split('-');
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10);
-        const totalDaysInMonth = new Date(year, month, 0).getDate();
-        
-        const monthData = getMonthSholatData(selectedYearMonth);
-        const tbody = document.getElementById('tbody-matrix-sholat');
-        
-        tbody.innerHTML = '';
-
-        for (let day = 1; day <= totalDaysInMonth; day++) {
-            const dayStr = String(day).padStart(2, '0');
-            const fullDateStr = `${selectedYearMonth}-${dayStr}`;
-            const dateObj = new Date(year, month - 1, day);
-            const namaHari = dateObj.toLocaleDateString('id-ID', { weekday: 'short' });
-
-            const tr = document.createElement('tr');
-            if (fullDateStr === todayStr) {
-                tr.className = 'today-row';
-            }
-
-            let rowHtml = `<td><strong>Tgl ${day}</strong> (${namaHari})</td>`;
-            const dayData = monthData[fullDateStr] || {};
-
-            sholatKeys.forEach(key => {
-                const itemData = dayData[key] || { checked: false, status: '' };
-                const cellContent = renderSholatCell(fullDateStr, key, itemData);
-                rowHtml += `<td>${cellContent}</td>`;
-            });
-
-            tr.innerHTML = rowHtml;
-            tbody.appendChild(tr);
-        }
-
-        updateTotalSummary();
-    }
-
-    function renderSholatCell(dateStr, key, itemData) {
-        const isPastDate = dateStr < todayStr;
-        const isFardhu = fardhuKeys.includes(key);
-
-        if (itemData && itemData.checked) {
-            const badgeClass = itemData.status === 'late' ? 'status-late' : 'status-on-time';
-            const badgeText = itemData.status === 'late' ? 'Terlambat' : 'Tepat';
-            return `
-                <div class="cell-flex">
-                    <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}" checked>
-                    <span class="status-tag ${badgeClass}">${badgeText}</span>
-                </div>
-            `;
+        const tr = document.createElement('tr');
+        if (fullDateStr === todayStr) {
+            tr.className = 'today-row';
         }
 
-        if (isPastDate && isFardhu) {
-            return `
-                <div class="cell-flex">
-                    <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}">
-                    <span class="status-missed">❌ Terlewat</span>
-                </div>
-            `;
-        }
+        let rowHtml = `<td><strong>Tgl ${day}</strong> (${namaHari})</td>`;
+        const dayData = monthData[fullDateStr] || {};
 
+        sholatKeys.forEach(key => {
+            const itemData = dayData[key] || { checked: false, status: '' };
+            const cellContent = renderSholatCell(fullDateStr, key, itemData);
+            rowHtml += `<td>${cellContent}</td>`;
+        });
+
+        tr.innerHTML = rowHtml;
+        tbody.appendChild(tr);
+    }
+
+    updateTotalSummary();
+}
+
+function renderSholatCell(dateStr, key, itemData) {
+    const isPastDate = dateStr < todayStr;
+    const isFardhu = fardhuKeys.includes(key);
+
+    if (itemData && itemData.checked) {
+        const badgeClass = itemData.status === 'late' ? 'status-late' : 'status-on-time';
+        const badgeText = itemData.status === 'late' ? 'Terlambat' : 'Tepat';
         return `
-            <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}">
+            <div class="cell-flex">
+                <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}" checked>
+                <span class="status-tag ${badgeClass}">${badgeText}</span>
+            </div>
         `;
     }
 
-    // Event Listener Tabel Sholat (Event Delegation)
-    document.getElementById('tbody-matrix-sholat').addEventListener('change', function(e) {
-        if (e.target && e.target.classList.contains('sholat-check')) {
-            const dateStr = e.target.getAttribute('data-date');
-            const sholatKey = e.target.getAttribute('data-key');
-            const isChecked = e.target.checked;
-            const selectedYearMonth = pickerBulan.value;
+    if (isPastDate && isFardhu) {
+        return `
+            <div class="cell-flex">
+                <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}">
+                <span class="status-missed">❌ Terlewat</span>
+            </div>
+        `;
+    }
 
-            const monthData = getMonthSholatData(selectedYearMonth);
-            if (!monthData[dateStr]) monthData[dateStr] = {};
+    return `
+        <input type="checkbox" class="checkbox-cell sholat-check" data-date="${dateStr}" data-key="${key}">
+    `;
+}
 
-            if (isChecked) {
-                let status = (dateStr < todayStr) ? 'late' : 'on-time';
-                monthData[dateStr][sholatKey] = { checked: true, status: status };
-            } else {
-                monthData[dateStr][sholatKey] = { checked: false, status: '' };
-            }
+// Event delegation langsung ke tabel
+document.getElementById('tbody-matrix-sholat').addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('sholat-check')) {
+        const dateStr = e.target.getAttribute('data-date');
+        const sholatKey = e.target.getAttribute('data-key');
+        const isChecked = e.target.checked;
+        const selectedYearMonth = pickerBulan.value;
 
-            saveMonthSholatData(selectedYearMonth, monthData);
-            renderMatrixTable();
+        const monthData = getMonthSholatData(selectedYearMonth);
+        if (!monthData[dateStr]) monthData[dateStr] = {};
+
+        if (isChecked) {
+            let status = (dateStr < todayStr) ? 'late' : 'on-time';
+            monthData[dateStr][sholatKey] = { checked: true, status: status };
+        } else {
+            monthData[dateStr][sholatKey] = { checked: false, status: '' };
         }
+
+        saveMonthSholatData(selectedYearMonth, monthData);
+        renderMatrixTable();
+    }
+});
+
+function updateTotalSummary() {
+    const selectedYearMonth = pickerBulan.value;
+    const monthData = getMonthSholatData(selectedYearMonth);
+    const tfoot = document.getElementById('tfoot-total-sholat');
+    
+    const totalPerSholat = { subuh: 0, dzuhur: 0, ashar: 0, maghrib: 0, isya: 0, tarawih: 0, dhuha: 0, tahajud: 0 };
+
+    Object.values(monthData).forEach(dayData => {
+        sholatKeys.forEach(key => {
+            if (dayData[key] && dayData[key].checked) {
+                totalPerSholat[key]++;
+            }
+        });
     });
 
-    function updateTotalSummary() {
-        const selectedYearMonth = pickerBulan.value;
-        const monthData = getMonthSholatData(selectedYearMonth);
-        const tfoot = document.getElementById('tfoot-total-sholat');
-        
-        const totalPerSholat = { subuh: 0, dzuhur: 0, ashar: 0, maghrib: 0, isya: 0, tarawih: 0, dhuha: 0, tahajud: 0 };
+    let footHtml = `<td>Total Terlaksana</td>`;
+    sholatKeys.forEach(key => {
+        footHtml += `<td>${totalPerSholat[key]} Hari</td>`;
+    });
+    tfoot.innerHTML = footHtml;
+}
 
-        Object.values(monthData).forEach(dayData => {
-            sholatKeys.forEach(key => {
-                if (dayData[key] && dayData[key].checked) {
-                    totalPerSholat[key]++;
-                }
-            });
-        });
+pickerBulan.addEventListener('change', renderMatrixTable);
 
-        let footHtml = `<td>Total Terlaksana</td>`;
-        sholatKeys.forEach(key => {
-            footHtml += `<td>${totalPerSholat[key]} Hari</td>`;
-        });
-        tfoot.innerHTML = footHtml;
+// LOGIKA TUGAS
+function getTugasData() {
+    const stored = safeGetItem('tugas_data');
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveTugasData(list) {
+    safeSetItem('tugas_data', JSON.stringify(list));
+}
+
+function getTaskStatus(item) {
+    if (item.isCompleted) return { label: 'Selesai', class: 'badge-success' };
+    if (item.deadline < todayStr) return { label: 'Terlambat', class: 'badge-danger' };
+    if (item.deadline === todayStr) return { label: 'Tenggat Hari Ini', class: 'badge-warning' };
+    return { label: 'Belum Selesai', class: 'badge-info' };
+}
+
+function renderTugas() {
+    const tugasList = getTugasData();
+    const container = document.getElementById('list-tugas');
+    container.innerHTML = '';
+
+    if (tugasList.length === 0) {
+        container.innerHTML = '<li class="item" style="justify-content: center; color: #888;">Belum ada catatan tugas.</li>';
+        return;
     }
 
-    pickerBulan.addEventListener('change', renderMatrixTable);
+    tugasList.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'item';
 
-    // LOGIKA TUGAS
-    function getTugasData() {
-        return JSON.parse(localStorage.getItem('tugas_data')) || [];
-    }
+        const status = getTaskStatus(item);
+        const parts = item.deadline.split('-');
+        const deadlineDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        const formattedDeadline = formatDateToIndonesian(deadlineDate);
 
-    function saveTugasData(list) {
-        localStorage.setItem('tugas_data', JSON.stringify(list));
-    }
-
-    function getTaskStatus(item) {
-        if (item.isCompleted) return { label: 'Selesai', class: 'badge-success' };
-        if (item.deadline < todayStr) return { label: 'Terlambat', class: 'badge-danger' };
-        if (item.deadline === todayStr) return { label: 'Tenggat Hari Ini', class: 'badge-warning' };
-        return { label: 'Belum Selesai', class: 'badge-info' };
-    }
-
-    function renderTugas() {
-        const tugasList = getTugasData();
-        const container = document.getElementById('list-tugas');
-        container.innerHTML = '';
-
-        if (tugasList.length === 0) {
-            container.innerHTML = '<li class="item" style="justify-content: center; color: #888;">Belum ada catatan tugas.</li>';
-            return;
-        }
-
-        tugasList.forEach(item => {
-            const li = document.createElement('li');
-            li.className = 'item';
-
-            const status = getTaskStatus(item);
-            const parts = item.deadline.split('-');
-            const deadlineDate = new Date(parts[0], parts[1] - 1, parts[2]);
-            const formattedDeadline = formatDateToIndonesian(deadlineDate);
-
-            li.innerHTML = `
-                <div class="item-left">
-                    <input type="checkbox" class="checkbox-cell tugas-check" data-id="${item.id}" ${item.isCompleted ? 'checked' : ''}>
-                    <div>
-                        <div class="${item.isCompleted ? 'done' : ''}" style="font-weight: 600;">
-                            ${escapeHtml(item.judul)}
-                            <span class="badge ${status.class}">${status.label}</span>
-                        </div>
-                        <div class="meta-text">
-                            ${escapeHtml(item.mapel)} • Deadline: ${formattedDeadline}
-                        </div>
+        li.innerHTML = `
+            <div class="item-left">
+                <input type="checkbox" class="checkbox-cell tugas-check" data-id="${item.id}" ${item.isCompleted ? 'checked' : ''}>
+                <div>
+                    <div class="${item.isCompleted ? 'done' : ''}" style="font-weight: 600;">
+                        ${escapeHtml(item.judul)}
+                        <span class="badge ${status.class}">${status.label}</span>
+                    </div>
+                    <div class="meta-text">
+                        ${escapeHtml(item.mapel)} • Deadline: ${formattedDeadline}
                     </div>
                 </div>
-                <button class="btn-delete" data-id="${item.id}" title="Hapus">✕</button>
-            `;
-            container.appendChild(li);
-        });
-    }
+            </div>
+            <button class="btn-delete" data-id="${item.id}" title="Hapus">✕</button>
+        `;
+        container.appendChild(li);
+    });
+}
 
-    document.getElementById('list-tugas').addEventListener('change', function(e) {
-        if (e.target && e.target.classList.contains('tugas-check')) {
-            const id = Number(e.target.getAttribute('data-id'));
+document.getElementById('list-tugas').addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('tugas-check')) {
+        const id = Number(e.target.getAttribute('data-id'));
+        const tugasList = getTugasData();
+        const updated = tugasList.map(item => {
+            if (item.id === id) item.isCompleted = e.target.checked;
+            return item;
+        });
+        saveTugasData(updated);
+        renderTugas();
+    } else if (e.target && e.target.classList.contains('btn-delete')) {
+        const id = Number(e.target.getAttribute('data-id'));
+        if (confirm('Apakah kamu yakin ingin menghapus tugas ini?')) {
             const tugasList = getTugasData();
-            const updated = tugasList.map(item => {
-                if (item.id === id) item.isCompleted = e.target.checked;
-                return item;
-            });
-            saveTugasData(updated);
+            const filtered = tugasList.filter(item => item.id !== id);
+            saveTugasData(filtered);
             renderTugas();
         }
-    });
-
-    document.getElementById('list-tugas').addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('btn-delete')) {
-            const id = Number(e.target.getAttribute('data-id'));
-            if (confirm('Apakah kamu yakin ingin menghapus tugas ini?')) {
-                const tugasList = getTugasData();
-                const filtered = tugasList.filter(item => item.id !== id);
-                saveTugasData(filtered);
-                renderTugas();
-            }
-        }
-    });
-
-    document.getElementById('form-tugas').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const mapel = document.getElementById('mapel').value;
-        const judul = document.getElementById('judul').value;
-        const deadline = document.getElementById('deadline').value;
-
-        const tugasList = getTugasData();
-        tugasList.unshift({
-            id: Date.now(),
-            mapel: mapel,
-            judul: judul,
-            deadline: deadline,
-            isCompleted: false
-        });
-
-        saveTugasData(tugasList);
-        renderTugas();
-        this.reset();
-    });
-
-    function escapeHtml(text) {
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
     }
-
-    renderMatrixTable();
-    renderTugas();
 });
+
+document.getElementById('form-tugas').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const mapel = document.getElementById('mapel').value;
+    const judul = document.getElementById('judul').value;
+    const deadline = document.getElementById('deadline').value;
+
+    const tugasList = getTugasData();
+    tugasList.unshift({
+        id: Date.now(),
+        mapel: mapel,
+        judul: judul,
+        deadline: deadline,
+        isCompleted: false
+    });
+
+    saveTugasData(tugasList);
+    renderTugas();
+    this.reset();
+});
+
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Inisialisasi Tampilan
+renderMatrixTable();
+renderTugas();
 </script>
 
 </body>
